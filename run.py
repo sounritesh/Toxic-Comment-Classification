@@ -67,7 +67,7 @@ def run(params, save_model=False):
     )
 
     device = torch.device(config.DEVICE)
-    model = BertClassifier(param)
+    model = BertClassifier(params)
     model.to(device)
 
     param_optimizer = list(model.named_parameters())
