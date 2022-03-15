@@ -55,7 +55,7 @@ def run(params, save_model=False):
     )
 
     train_data_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.train_batch_size, num_workers=4
+        train_dataset, batch_size=args.train_batch_size
     )
 
     valid_dataset = dataset.ToxicityDatasetBERT(
@@ -63,7 +63,7 @@ def run(params, save_model=False):
     )
 
     valid_data_loader = torch.utils.data.DataLoader(
-        valid_dataset, batch_size=args.val_batch_size, num_workers=1
+        valid_dataset, batch_size=args.val_batch_size
     )
 
     device = torch.device(config.DEVICE)
