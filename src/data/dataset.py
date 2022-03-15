@@ -12,7 +12,7 @@ class ToxicityDatasetBERT(Dataset):
         return len(self.targets)
 
     def __getitem__(self, index):
-        text = self.targets[index]
+        text = self.texts[index]
 
         inputs = self.tokenizer.encode_plus(
             text,
