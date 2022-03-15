@@ -5,12 +5,12 @@ import torch
 
 
 class BertClassifier(nn.Module):
-    def __init__(self, args):
+    def __init__(self, params):
         super(BertClassifier, self).__init__()
-        self.bert = transformers.AutoModel.from_pretrained(args['bert_path'])
-        self.bert_drop = nn.Dropout(args['dropout'])
+        self.bert = transformers.AutoModel.from_pretrained(params['bert_path'])
+        self.bert_drop = nn.Dropout(params['dropout'])
 
-        self.mlp = nn.Linear(args['input_size'], args['ntargets'])
+        self.mlp = nn.Linear(params['input_size'], params['ntargets'])
 
     def forward(self, ids, mask, token_type_ids):
 
