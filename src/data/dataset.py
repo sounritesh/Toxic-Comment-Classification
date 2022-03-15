@@ -18,9 +18,8 @@ class ToxicityDatasetBERT(Dataset):
             text,
             add_special_tokens=True,
             max_length = self.max_len,
-            pad_to_max_length = True,
-            truncation_strategy = 'longest_first',
-            truncation=True,
+            padding = True,
+            truncation = True,
             return_tensors = 'pt'
         )
 
