@@ -16,7 +16,10 @@ class BertClassifier(nn.Module):
 
         o = self.bert(ids.squeeze(), attention_mask=mask.squeeze(), token_type_ids=token_type_ids.squeeze())  
         
-        print(len(o))
-        output = self.mlp(o['pooler_output'])
+        try:
+            output = self.mlp(o['pooler_output'])
+        except:
+            print(o[0].shape, 0[1].shape)
+            output = self.mlp(o[1])
 
         return output
