@@ -29,7 +29,7 @@ def train_fn(data_loader, model, optimizer, device, scheduler):
         loss = loss_fn(outputs, targets)
         loss.backward()
         loss_tot += loss.item()
-        print(loss_tot)
+        print(loss.item())
         optimizer.step()
         scheduler.step()
     epoch_loss =  loss_tot/len(data_loader)
