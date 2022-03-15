@@ -20,6 +20,7 @@ class ToxicityDatasetBERT(Dataset):
             max_length = self.max_len,
             pad_to_max_length = True,
             truncation_strategy = 'longest_first',
+            truncation=True,
             return_tensors = 'pt'
         )
 

@@ -14,7 +14,7 @@ class BertClassifier(nn.Module):
 
     def forward(self, ids, mask, token_type_ids):
 
-        o = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)  
+        o = self.bert(ids.squeeze(), attention_mask=mask.squeeze(), token_type_ids=token_type_ids.squeeze())  
         output = self.mlp(o['pooler_output'])
 
         return output
