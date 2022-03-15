@@ -19,7 +19,7 @@ class BertClassifier(nn.Module):
         try:
             output = self.mlp(o['pooler_output'])
         except:
-            print(o[0].shape, o[1].shape)
+            # print(o[0].shape, o[1].shape)
             output = self.mlp(o[1])
 
         return output
