@@ -12,7 +12,7 @@ def train_fn(data_loader, model, optimizer, device, scheduler):
     model.train()
 
     loss_tot = 0
-    for bi, d in tqdm(enumerate(data_loader), total=len(data_loader)):
+    for bi, d in tqdm(enumerate(data_loader), total=len(data_loader), position=0, leave=True):
         ids = d["input_ids"]
         token_type_ids = d["token_type_ids"]
         mask = d["attention_mask"]
@@ -41,7 +41,7 @@ def eval_fn(data_loader, model, device):
     fin_targets = []
     fin_outputs = []
     with torch.no_grad():
-        for bi, d in tqdm(enumerate(data_loader), total=len(data_loader)):
+        for bi, d in tqdm(enumerate(data_loader), total=len(data_loader), position=0, leave=True):
             ids = d["input_ids"]
             token_type_ids = d["token_type_ids"]
             mask = d["attention_mask"]
