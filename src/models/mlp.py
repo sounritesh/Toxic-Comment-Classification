@@ -1,4 +1,4 @@
-from utils.config import *
+from src.utils.config import *
 import transformers
 import torch.nn as nn
 import torch
