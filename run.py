@@ -100,7 +100,7 @@ def run(params, save_model=False):
     for epoch in range(args.epochs):
         engine.train_fn(train_data_loader, model, optimizer, device, scheduler)
         outputs, targets = engine.eval_fn(valid_data_loader, model, device)
-        accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs, params['threshold'])
+        accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs, 0.5)
         print(f"Accuracy Score = {accuracy}")
         if roc_auc > best_roc_auc:
             best_roc_auc = roc_auc

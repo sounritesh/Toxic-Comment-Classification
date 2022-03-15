@@ -11,6 +11,7 @@ def loss_fn(outputs, targets):
 def train_fn(data_loader, model, optimizer, device, scheduler):
     model.train()
 
+    loss_tot = 0
     for bi, d in tqdm(enumerate(data_loader), total=len(data_loader)):
         ids = d["input_ids"]
         token_type_ids = d["token_type_ids"]
@@ -27,9 +28,11 @@ def train_fn(data_loader, model, optimizer, device, scheduler):
 
         loss = loss_fn(outputs, targets)
         loss.backward()
+        loss_tot += loss.item()
+        print(loss_tot)
         optimizer.step()
         scheduler.step()
-    epoch_loss =  loss/len(data_loader)
+    epoch_loss =  loss_tot/len(data_loader)
     print(epoch_loss)
 
 
@@ -52,5 +55,5 @@ def eval_fn(data_loader, model, device):
             outputs = model(ids=ids, mask=mask, token_type_ids=token_type_ids)
             fin_targets.extend(targets.cpu().detach().numpy().tolist())
             fin_outputs.extend(torch.sigmoid(outputs).cpu().detach().numpy().tolist())
-            
+
     return fin_outputs, fin_targets
