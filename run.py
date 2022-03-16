@@ -12,7 +12,7 @@ import transformers
 
 from src.models.mlp import BertClassifier
 from sklearn import model_selection
-from torch.optim import Adam
+from torch.optim import Adam, lr_scheduler
 from transformers import get_linear_schedule_with_warmup
 
 import optuna
@@ -92,8 +92,14 @@ def run(params, save_model=True):
 
     num_train_steps = int(len(df_train) / args.train_batch_size * args.epochs)
     optimizer = Adam(optimizer_parameters, lr=params['lr'])
-    scheduler = get_linear_schedule_with_warmup(
-        optimizer, num_warmup_steps=0, num_training_steps=num_train_steps
+    # scheduler = get_linear_schedule_with_warmup(
+    #     optimizer, num_warmup_steps=0, num_training_steps=num_train_steps
+    # )
+    scheduler = lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode = 'max',
+        factor=0.5,
+        patience=2
     )
 
     early_stopping_iter = 3
@@ -101,7 +107,7 @@ def run(params, save_model=True):
 
     best_roc_auc = 0
     for epoch in range(args.epochs):
-        engine.train_fn(train_data_loader, model, optimizer, device, scheduler)
+        train_loss = engine.train_fn(train_data_loader, model, optimizer, device, scheduler)
         outputs, targets = engine.eval_fn(valid_data_loader, model, device)
         accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs, 0.5)
         print(f"Accuracy Score = {accuracy}")
@@ -114,8 +120,9 @@ def run(params, save_model=True):
 
         if early_stopping_iter < early_stopping_counter:
             break
-
-        print(f"EPOCH[{epoch}]: accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}")
+        
+        scheduler.step(roc_auc)
+        print(f"EPOCH[{epoch+1}]: train loss: {train_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}")
 
     return best_roc_auc
 
