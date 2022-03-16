@@ -12,7 +12,7 @@ import transformers
 
 from src.models.mlp import BertClassifier
 from sklearn import model_selection
-from transformers import Adam
+from torch.optim import Adam
 from transformers import get_linear_schedule_with_warmup
 
 import optuna
