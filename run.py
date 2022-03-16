@@ -17,7 +17,7 @@ from transformers import get_linear_schedule_with_warmup
 
 import optuna
 import random
-from tqdm.auto import tqdm
+from tqdm.notebook import tqdm
 
 import os
 
