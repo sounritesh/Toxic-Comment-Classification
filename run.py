@@ -12,7 +12,7 @@ import transformers
 
 from src.models.mlp import BertClassifier
 from sklearn import model_selection
-from transformers import AdamW
+from transformers import Adam
 from transformers import get_linear_schedule_with_warmup
 
 import optuna
@@ -91,7 +91,7 @@ def run(params, save_model=True):
     ]
 
     num_train_steps = int(len(df_train) / args.train_batch_size * args.epochs)
-    optimizer = AdamW(optimizer_parameters, lr=params['lr'])
+    optimizer = Adam(optimizer_parameters, lr=params['lr'])
     scheduler = get_linear_schedule_with_warmup(
         optimizer, num_warmup_steps=0, num_training_steps=num_train_steps
     )
