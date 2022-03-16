@@ -5,12 +5,34 @@ from .config import DEVICE
 
 
 def loss_fn(outputs, targets):
+    '''
+    Function to calculate the Binary Cross Entropy Loss between logits and expected targets
+
+    Parameters:
+    outputs (torch.Tensor): logits returned by the model.
+    targets (torch.Tensor): expected labels.
+
+    Returns:
+    loss (torch.Tensor): tensor of shape [1] reporting the loss.
+    '''
     return nn.BCEWithLogitsLoss().to(DEVICE)(outputs, targets.view(-1, 1))
 
 
-def train_fn(data_loader, model, optimizer, device, scheduler):
-    model.train()
+def train_fn(data_loader, model, optimizer, device):
+    '''
+    Function to carry out training for all batches in an epoch
 
+    Parameters:
+    data_loader (torch.utils.data.Dataloader): data loader containing all training samples and labels.
+    model (torch.nn.Module): classification model to be trained.
+    optimizer (torch.optim.Optimizer): optimizer for fitting the model.
+    device: device to load the model and tensors onto.
+
+    Returns:
+    epoch_loss (torch.Tensor): tensor of shape [1] reporting loss for the epoch.
+    '''
+
+    model.train()
     loss_tot = 0
     for bi, d in tqdm(enumerate(data_loader), total=len(data_loader), position=0, leave=True):
         ids = d["input_ids"]
@@ -37,6 +59,19 @@ def train_fn(data_loader, model, optimizer, device, scheduler):
 
 
 def eval_fn(data_loader, model, device):
+    '''
+    Function to carry out evaluation for all batches
+
+    Parameters:
+    data_loader (torch.utils.data.Dataloader): data loader containing all training samples and labels.
+    model (torch.nn.Module): classification model to be trained.
+    device: device to load the model and tensors onto.
+
+    Returns:
+    fin_outputs (torch.Tensor): output logits from the model.
+    fin_targets (torch.Tensor): expected labels.
+    '''
+
     model.eval()
     fin_targets = []
     fin_outputs = []

@@ -1,10 +1,12 @@
 from src.utils.config import *
 import transformers
 import torch.nn as nn
-import torch
 
 
 class BertClassifier(nn.Module):
+    '''
+    MLP classification model with mBERT as embedding layer and two fully connected layers with ReLU and Sigmoid activation functions respectively
+    '''
     def __init__(self, params):
         super(BertClassifier, self).__init__()
         self.bert = transformers.AutoModel.from_pretrained(params['bert_path'])

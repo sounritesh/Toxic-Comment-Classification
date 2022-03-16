@@ -1,4 +1,3 @@
-from pytest import param
 import src.utils.config as config
 import src.data.dataset as dataset
 import src.utils.engine as engine
@@ -11,9 +10,7 @@ import numpy as np
 import transformers
 
 from src.models.mlp import BertClassifier
-from sklearn import model_selection
 from torch.optim import Adam, lr_scheduler, SGD
-from transformers import get_linear_schedule_with_warmup
 
 import optuna
 import random
@@ -24,23 +21,27 @@ import os
 from argparse import ArgumentParser
 
 parser = ArgumentParser(description="Train model on the dataset and evaluate results.")
-parser.add_argument("--seed", type=int, default=0)
-parser.add_argument("--train_path", type=str)
-parser.add_argument("--val_path", type=str)
-parser.add_argument("--test_path", type=str)
-parser.add_argument("--bert_path", type=str)
+parser.add_argument("--seed", type=int, default=0, help="Random seed for all sampling purposes")
+parser.add_argument("--train_path", type=str, help="Path to training file")
+parser.add_argument("--val_path", type=str, help="Path to validation file")
+parser.add_argument("--test_path", type=str, help="Path to testing file")
+parser.add_argument("--bert_path", default="bert-base-multilingual-uncased", type=str, help="Path to base bert model")
 
-parser.add_argument("--preprocess", action="store_true")
+parser.add_argument("--lr", type=float, default=1e-4, help="Specifies the learning rate for optimizer")
+parser.add_argument("--dropout", type=float, default=0.3, help="Specifies the dropout for BERT output")
 
-parser.add_argument("--output_dir", type=str)
+parser.add_argument("--preprocess", action="store_true", help="To apply preprocessing step")
+parser.add_argument("--tune", action="store_true", help="To tune model by trying different hyperparams")
 
-parser.add_argument("--max_len", type=int, default=128)
-parser.add_argument("--hidden_size", type=int, default=32)
+parser.add_argument("--output_dir", type=str, help="Path to output directory for saving model checkpoints")
 
-parser.add_argument("--epochs", type=int, default=15)
+parser.add_argument("--max_len", type=int, default=128, help="Specifies the maximum length of input sequence")
+parser.add_argument("--hidden_size", type=int, default=32, help="Specifies the hidden size of fully connected layer")
 
-parser.add_argument("--train_batch_size", type=int, default=128)
-parser.add_argument("--val_batch_size", type=int, default=256)
+parser.add_argument("--epochs", type=int, default=15, help="Specifies the number of training epochs")
+
+parser.add_argument("--train_batch_size", type=int, default=64, help="Specifies the training batch size")
+parser.add_argument("--val_batch_size", type=int, default=256, help="Specifies the validation and testing batch size")
 
 args = parser.parse_args()
 
@@ -54,7 +55,7 @@ def run(params, save_model=True):
     df_train = pd.read_csv(args.train_path).sample(frac=1).reset_index(drop=True)
     df_train.toxic = df_train.toxic.astype(float)
     df_train.comment_text = df_train.comment_text.astype(str)
-    
+
     df_val = pd.read_csv(args.val_path).sample(frac=1).reset_index(drop=True)
     df_test = pd.read_csv(args.test_path).sample(frac=1).reset_index(drop=True)
 
@@ -67,7 +68,6 @@ def run(params, save_model=True):
         args.max_len,
         args.preprocess
     )
-
     train_data_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.train_batch_size
     )
@@ -79,9 +79,19 @@ def run(params, save_model=True):
         args.max_len,
         args.preprocess
     )
-
     valid_data_loader = torch.utils.data.DataLoader(
         valid_dataset, batch_size=args.val_batch_size
+    )
+
+    test_dataset = dataset.ToxicityDatasetBERT(
+        df_test.comment_text.values, 
+        df_test.toxic.values, 
+        tokenizer, 
+        args.max_len,
+        args.preprocess
+    )
+    test_data_loader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=args.val_batch_size
     )
 
     device = torch.device(config.DEVICE)
@@ -107,19 +117,10 @@ def run(params, save_model=True):
 
     num_train_steps = int(len(df_train) / args.train_batch_size * args.epochs)
     optimizer = SGD(optimizer_parameters, lr=params['lr'])
-    # scheduler = get_linear_schedule_with_warmup(
-    #     optimizer, num_warmup_steps=0, num_training_steps=num_train_steps
-    # )
-    # scheduler = lr_scheduler.ReduceLROnPlateau(
-    #     optimizer,
-    #     mode = 'max',
-    #     factor=0.5,
-    #     patience=2
-    # )
 
     scheduler = lr_scheduler.StepLR(
         optimizer,
-        step_size=2,
+        step_size=5,
         gamma=0.5
     )
 
@@ -128,9 +129,9 @@ def run(params, save_model=True):
 
     best_roc_auc = 0
     for epoch in range(args.epochs):
-        train_loss = engine.train_fn(train_data_loader, model, optimizer, device, scheduler)
+        train_loss = engine.train_fn(train_data_loader, model, optimizer, device)
         outputs, targets = engine.eval_fn(valid_data_loader, model, device)
-        accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs, 0.5)
+        accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs)
         print(f"Accuracy Score = {accuracy}")
         if roc_auc > best_roc_auc:
             best_roc_auc = roc_auc
@@ -142,47 +143,48 @@ def run(params, save_model=True):
         if early_stopping_iter < early_stopping_counter:
             break
         
-        # scheduler.step(roc_auc)
         scheduler.step()
         print(f"EPOCH[{epoch+1}]: train loss: {train_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}")
+
+    outputs, targets = engine.eval_fn(test_data_loader, model, device)
+    accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs)
+
+    print(f"TEST RESULTS accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}")
 
     return best_roc_auc
 
 def objective(trial):
     params = {
-        'lstm_layers': trial.suggest_int('lstm_layers', 1, 3),
-        # 'lstm_layers': 1,
-        'mlp_layers': trial.suggest_int('mlp_layers', 1, 3),
-        'lstm_hidden_size': trial.suggest_int('lstm_hidden_size', 18, 768),
-        # 'lstm_hidden_size': 20,
-        'mlp_hidden_size': trial.suggest_int('mlp_hidden_size', 18, 768),
+        'hidden_size': trial.suggest_int('hidden_size', 18, 768),
         'dropout': trial.suggest_uniform('dropout', 0.1, 0.7),
         'lr': trial.suggest_loguniform('lr', 1e-5, 1e-2),
-        'threshold': 0.5
+        'bert_path': args.bert_path,
+        'input_size': 768,
+        'ntargets': 1,
     }
     return run(params, False)
 
 def main():
-    # study = optuna.create_study(direction='maximize')
-    # study.optimize(objective, n_trials=20)
+    if args.tune:
+        study = optuna.create_study(direction='maximize')
+        study.optimize(objective, n_trials=20)
 
-    # trial_ = study.best_trial
+        trial_ = study.best_trial
+        print(f"\n Best Trial: {trial_.values}, Params: {trial_.params}")
 
-    # print(f"\n Best Trial: {trial_.values}, Params: {trial_.params}")
+        score = run(trial_.params, True)
+        print(score)
+    else:
+        params = {
+            'dropout': args.dropout,
+            'lr': args.lr,
+            'bert_path': args.bert_path,
+            'input_size': 768,
+            'ntargets': 1,
+            'hidden_size': args.hidden_size
+        }
 
-    # score = run(trial_.params, True)
-
-    # print(score)
-    params = {
-        'dropout': 0.3,
-        'lr': 1e-4,
-        'bert_path': args.bert_path,
-        'input_size': 768,
-        'ntargets': 1,
-        'hidden_size': args.hidden_size
-    }
-
-    run(params)
+        run(params)
 
 if __name__ == "__main__":
     main()
