@@ -95,11 +95,17 @@ def run(params, save_model=True):
     # scheduler = get_linear_schedule_with_warmup(
     #     optimizer, num_warmup_steps=0, num_training_steps=num_train_steps
     # )
-    scheduler = lr_scheduler.ReduceLROnPlateau(
+    # scheduler = lr_scheduler.ReduceLROnPlateau(
+    #     optimizer,
+    #     mode = 'max',
+    #     factor=0.5,
+    #     patience=2
+    # )
+
+    scheduler = lr_scheduler.StepLR(
         optimizer,
-        mode = 'max',
-        factor=0.5,
-        patience=2
+        step_size=2,
+        gamma=0.2
     )
 
     early_stopping_iter = 3
@@ -121,7 +127,8 @@ def run(params, save_model=True):
         if early_stopping_iter < early_stopping_counter:
             break
         
-        scheduler.step(roc_auc)
+        # scheduler.step(roc_auc)
+        scheduler.step()
         print(f"EPOCH[{epoch+1}]: train loss: {train_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}")
 
     return best_roc_auc
