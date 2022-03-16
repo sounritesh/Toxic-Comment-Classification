@@ -52,6 +52,7 @@ def run(params, save_model=True):
 
 
     df_train = pd.read_csv(args.train_path).sample(frac=1).reset_index(drop=True)
+    df_train.toxic = df_train.toxic.astype(float)
     df_val = pd.read_csv(args.val_path).sample(frac=1).reset_index(drop=True)
     df_test = pd.read_csv(args.test_path).sample(frac=1).reset_index(drop=True)
 
