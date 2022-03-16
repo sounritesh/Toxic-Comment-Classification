@@ -20,9 +20,11 @@ class BertClassifier(nn.Module):
         
         try:
             output = self.relu(self.fc1(o['pooler_output']))
+            output = self.bert_drop(output)
             output = self.mlp(output)
         except:
             output = self.relu(self.fc1(o[1]))
+            output = self.bert_drop(output)
             output = self.mlp(output)
 
         return output
