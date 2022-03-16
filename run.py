@@ -30,7 +30,10 @@ parser.add_argument("--val_path", type=str)
 parser.add_argument("--test_path", type=str)
 parser.add_argument("--bert_path", type=str)
 
+parser.add_argument("--output_dir", type=str)
+
 parser.add_argument("--max_len", type=int, default=128)
+parser.add_argument("--hid_size", type=int, default=32)
 
 parser.add_argument("--epochs", type=int, default=15)
 
@@ -43,7 +46,7 @@ random.seed(args.seed)
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
-def run(params, save_model=False):
+def run(params, save_model=True):
     df_train = pd.read_csv(args.train_path).sample(frac=1).reset_index(drop=True)
     df_val = pd.read_csv(args.val_path).sample(frac=1).reset_index(drop=True)
     df_test = pd.read_csv(args.test_path).sample(frac=1).reset_index(drop=True)
@@ -146,7 +149,8 @@ def main():
         'lr': 1e-3,
         'bert_path': args.bert_path,
         'input_size': 768,
-        'ntargets': 1
+        'ntargets': 1,
+        'hidden_size': args.hidden_size
     }
 
     run(params)
