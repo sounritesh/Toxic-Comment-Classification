@@ -30,8 +30,6 @@ parser.add_argument("--val_path", type=str)
 parser.add_argument("--test_path", type=str)
 parser.add_argument("--bert_path", type=str)
 
-parser.add_argument("--bert_path", type=str)
-
 parser.add_argument("--preprocess", action="store_true")
 
 parser.add_argument("--output_dir", type=str)
