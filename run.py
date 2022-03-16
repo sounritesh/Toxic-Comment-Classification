@@ -33,7 +33,7 @@ parser.add_argument("--bert_path", type=str)
 parser.add_argument("--output_dir", type=str)
 
 parser.add_argument("--max_len", type=int, default=128)
-parser.add_argument("--hid_size", type=int, default=32)
+parser.add_argument("--hidden_size", type=int, default=32)
 
 parser.add_argument("--epochs", type=int, default=15)
 
