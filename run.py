@@ -30,6 +30,10 @@ parser.add_argument("--val_path", type=str)
 parser.add_argument("--test_path", type=str)
 parser.add_argument("--bert_path", type=str)
 
+parser.add_argument("--bert_path", type=str)
+
+parser.add_argument("--preprocess", action="store_true")
+
 parser.add_argument("--output_dir", type=str)
 
 parser.add_argument("--max_len", type=int, default=128)
@@ -47,6 +51,8 @@ np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
 def run(params, save_model=True):
+
+
     df_train = pd.read_csv(args.train_path).sample(frac=1).reset_index(drop=True)
     df_val = pd.read_csv(args.val_path).sample(frac=1).reset_index(drop=True)
     df_test = pd.read_csv(args.test_path).sample(frac=1).reset_index(drop=True)
@@ -54,7 +60,11 @@ def run(params, save_model=True):
     tokenizer = transformers.AutoTokenizer.from_pretrained(params['bert_path'], do_lower_case=True)
 
     train_dataset = dataset.ToxicityDatasetBERT(
-        df_train.comment_text.values, df_train.toxic.values, tokenizer, args.max_len
+        df_train.comment_text.values, 
+        df_train.toxic.values, 
+        tokenizer, 
+        args.max_len,
+        args.preprocess
     )
 
     train_data_loader = torch.utils.data.DataLoader(
@@ -62,7 +72,11 @@ def run(params, save_model=True):
     )
 
     valid_dataset = dataset.ToxicityDatasetBERT(
-        df_val.comment_text.values, df_val.toxic.values, tokenizer, args.max_len
+        df_val.comment_text.values, 
+        df_val.toxic.values, 
+        tokenizer, 
+        args.max_len,
+        args.preprocess
     )
 
     valid_data_loader = torch.utils.data.DataLoader(
