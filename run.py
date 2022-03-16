@@ -84,7 +84,7 @@ def run(params, save_model=True):
     )
 
     test_dataset = dataset.ToxicityDatasetBERT(
-        df_test.comment_text.values, 
+        df_test.content.values, 
         df_test.toxic.values, 
         tokenizer, 
         args.max_len,
