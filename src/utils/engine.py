@@ -5,7 +5,7 @@ from .config import DEVICE
 
 
 def loss_fn(outputs, targets):
-    return nn.BCEWithLogitsLoss(pos_weight=torch.tensor([0.495, 4.68])).to(DEVICE)(outputs, targets.view(-1, 1))
+    return nn.BCEWithLogitsLoss().to(DEVICE)(outputs, targets.view(-1, 1))
 
 
 def train_fn(data_loader, model, optimizer, device, scheduler):
