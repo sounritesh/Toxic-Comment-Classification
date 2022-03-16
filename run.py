@@ -116,7 +116,7 @@ def run(params, save_model=True):
 
     scheduler = lr_scheduler.StepLR(
         optimizer,
-        step_size=3,
+        step_size=2,
         gamma=0.5
     )
 
