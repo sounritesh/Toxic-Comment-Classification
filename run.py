@@ -6,6 +6,7 @@ import torch
 import pandas as pd
 import torch.nn as nn
 import numpy as np
+import wandb
 
 import transformers
 
@@ -50,7 +51,7 @@ np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
 def run(params, save_model=True):
-
+    wandb.config = params
 
     df = pd.read_csv(args.data_path).sample(frac=1).reset_index(drop=True)
     df.blocked = df.blocked.astype(float)
@@ -151,9 +152,20 @@ def run(params, save_model=True):
         
         scheduler.step()
         print(f"EPOCH[{epoch+1}]: train loss: {train_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}")
+        wandb.log({
+            "train loss": train_loss,
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1-score": fscore,
+            "roc-auc": roc_auc
+        })
 
     outputs, targets = engine.eval_fn(test_data_loader, model, device)
     accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs)
+
+    wandb.summary['test_f1'] = fscore
+    wandb.finish()
 
     print(f"TEST RESULTS accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}")
 
