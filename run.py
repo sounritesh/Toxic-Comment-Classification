@@ -51,7 +51,11 @@ np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
 def run(params, save_model=True):
-    wandb.config = params
+    wandb.init(
+        project="pacemaker", 
+        entity="now-and-me",
+        config=params
+    )
 
     df = pd.read_csv(args.data_path).sample(frac=1).reset_index(drop=True)
     df.blocked = df.blocked.astype(float)
@@ -104,6 +108,7 @@ def run(params, save_model=True):
     device = torch.device(config.DEVICE)
     model = BertClassifier(params)
     model.to(device)
+    wandb.watch(model)
 
     param_optimizer = list(model.named_parameters())
     no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
