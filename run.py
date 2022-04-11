@@ -22,9 +22,9 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser(description="Train model on the dataset and evaluate results.")
 parser.add_argument("--seed", type=int, default=0, help="Random seed for all sampling purposes")
-parser.add_argument("--train_path", type=str, help="Path to training file")
-parser.add_argument("--val_path", type=str, help="Path to validation file")
-parser.add_argument("--test_path", type=str, help="Path to testing file")
+parser.add_argument("--data_path", type=str, help="Path to training file")
+# parser.add_argument("--val_path", type=str, help="Path to validation file")
+# parser.add_argument("--test_path", type=str, help="Path to testing file")
 parser.add_argument("--bert_path", default="bert-base-multilingual-uncased", type=str, help="Path to base bert model")
 
 parser.add_argument("--lr", type=float, default=1e-4, help="Specifies the learning rate for optimizer")
@@ -52,18 +52,22 @@ torch.manual_seed(args.seed)
 def run(params, save_model=True):
 
 
-    df_train = pd.read_csv(args.train_path).sample(frac=1).reset_index(drop=True)
-    df_train.toxic = df_train.toxic.astype(float)
-    df_train.comment_text = df_train.comment_text.astype(str)
+    df = pd.read_csv(args.data_path).sample(frac=1).reset_index(drop=True)
+    df.blocked = df.blocked.astype(float)
+    df.body = df.body.astype(str)
 
-    df_val = pd.read_csv(args.val_path).sample(frac=1).reset_index(drop=True)
-    df_test = pd.read_csv(args.test_path).sample(frac=1).reset_index(drop=True)
+    df_train = df.sample(frac=0.8).reset_index(drop=True)
+    df_rest = df.drop(df_train.index)    
+    df_val = df_rest.sample(frac=0.4).reset_index(drop=True)
+    df_test = df_rest.drop(df_val.index)
+
+    print(f"Stratification Split, \ntrain: {df_train['blocked'].value_counts()} \nval: {df_val['blocked'].value_counts()} \ntest: {df_test['blocked'].value_counts()}")
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(params['bert_path'], do_lower_case=True)
 
     train_dataset = dataset.ToxicityDatasetBERT(
-        df_train.comment_text.values, 
-        df_train.toxic.values, 
+        df_train.body.values, 
+        df_train.blocked.values, 
         tokenizer, 
         args.max_len,
         args.preprocess
@@ -73,8 +77,8 @@ def run(params, save_model=True):
     )
 
     valid_dataset = dataset.ToxicityDatasetBERT(
-        df_val.comment_text.values, 
-        df_val.toxic.values, 
+        df_val.body.values, 
+        df_val.blocked.values, 
         tokenizer, 
         args.max_len,
         args.preprocess
@@ -84,8 +88,8 @@ def run(params, save_model=True):
     )
 
     test_dataset = dataset.ToxicityDatasetBERT(
-        df_test.content.values, 
-        df_test.toxic.values, 
+        df_test.body.values, 
+        df_test.blocked.values, 
         tokenizer, 
         args.max_len,
         args.preprocess
