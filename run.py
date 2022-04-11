@@ -56,6 +56,8 @@ def run(params, save_model=True):
     df.blocked = df.blocked.astype(float)
     df.body = df.body.astype(str)
 
+    df = pd.concat([ df[df['blocked']==1], df[df['blocked']==0].sample(frac=0.015) ])
+
     df_train = df.sample(frac=0.8).reset_index(drop=True)
     df_rest = df.drop(df_train.index)    
     df_val = df_rest.sample(frac=0.4).reset_index(drop=True)
