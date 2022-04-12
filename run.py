@@ -33,6 +33,7 @@ parser.add_argument("--dropout", type=float, default=0.3, help="Specifies the dr
 
 parser.add_argument("--preprocess", action="store_true", help="To apply preprocessing step")
 parser.add_argument("--tune", action="store_true", help="To tune model by trying different hyperparams")
+# parser.add_argument("--bert", action="store_true", help="To signify whether the model is bert based")
 
 parser.add_argument("--output_dir", type=str, help="Path to output directory for saving model checkpoints")
 
@@ -108,7 +109,12 @@ def run(params, save_model=True):
     device = torch.device(config.DEVICE)
     model = BertClassifier(params)
     model.to(device)
-    wandb.watch(model)
+    wandb.watch(model, log="all", log_freq=10, idx=None, log_graph=(True))
+
+    if params['bert_path'] == "unitary/toxic-bert":
+        bert_flag = True
+    else:
+        bert_flag = False
 
     param_optimizer = list(model.named_parameters())
     no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
@@ -141,8 +147,8 @@ def run(params, save_model=True):
 
     best_roc_auc = 0
     for epoch in range(args.epochs):
-        train_loss = engine.train_fn(train_data_loader, model, optimizer, device)
-        outputs, targets = engine.eval_fn(valid_data_loader, model, device)
+        train_loss = engine.train_fn(train_data_loader, model, optimizer, device, bert_flag)
+        outputs, targets = engine.eval_fn(valid_data_loader, model, device, bert_flag)
         accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs)
         print(f"Accuracy Score = {accuracy}")
         if roc_auc > best_roc_auc:
@@ -166,7 +172,7 @@ def run(params, save_model=True):
             "roc-auc": roc_auc
         })
 
-    outputs, targets = engine.eval_fn(test_data_loader, model, device)
+    outputs, targets = engine.eval_fn(test_data_loader, model, device, bert_flag)
     accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs)
 
     wandb.summary['test_f1'] = fscore
@@ -181,7 +187,7 @@ def objective(trial):
         'hidden_size': trial.suggest_int('hidden_size', 18, 768),
         'dropout': trial.suggest_uniform('dropout', 0.1, 0.7),
         'lr': trial.suggest_loguniform('lr', 1e-5, 1e-2),
-        'bert_path': args.bert_path,
+        'bert_path': trial.suggest_categorical("bert_path", ["unitary/toxic-bert", "unitary/unbiased-toxic-roberta", "unitary/multilingual-toxic-xlm-roberta"]),
         'input_size': 768,
         'ntargets': 1,
     }

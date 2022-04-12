@@ -18,7 +18,7 @@ def loss_fn(outputs, targets):
     return nn.BCEWithLogitsLoss().to(DEVICE)(outputs, targets.view(-1, 1))
 
 
-def train_fn(data_loader, model, optimizer, device):
+def train_fn(data_loader, model, optimizer, device, bert_flag):
     '''
     Function to carry out training for all batches in an epoch
 
@@ -41,12 +41,16 @@ def train_fn(data_loader, model, optimizer, device):
         targets = d["targets"]
 
         ids = ids.to(device, dtype=torch.long)
-        token_type_ids = token_type_ids.to(device, dtype=torch.long)
         mask = mask.to(device, dtype=torch.long)
         targets = targets.to(device, dtype=torch.float)
 
         optimizer.zero_grad()
-        outputs = model(ids=ids, mask=mask, token_type_ids=token_type_ids)
+
+        if bert_flag:
+            token_type_ids = token_type_ids.to(device, dtype=torch.long)
+            outputs = model(ids=ids, mask=mask, token_type_ids=token_type_ids)
+        else:
+            outputs = model(ids=ids, mask=mask, token_type_ids=None)
 
         loss = loss_fn(outputs, targets)
         loss.backward()
@@ -58,7 +62,7 @@ def train_fn(data_loader, model, optimizer, device):
     return epoch_loss
 
 
-def eval_fn(data_loader, model, device):
+def eval_fn(data_loader, model, device, bert_flag):
     '''
     Function to carry out evaluation for all batches
 
@@ -82,12 +86,15 @@ def eval_fn(data_loader, model, device):
             mask = d["attention_mask"]
             targets = d["targets"]
 
-            ids = ids.to(device, dtype=torch.long)
-            token_type_ids = token_type_ids.to(device, dtype=torch.long)
             mask = mask.to(device, dtype=torch.long)
             targets = targets.to(device, dtype=torch.float)
-
-            outputs = model(ids=ids, mask=mask, token_type_ids=token_type_ids)
+            ids = ids.to(device, dtype=torch.long)
+            if bert_flag:
+                token_type_ids = token_type_ids.to(device, dtype=torch.long)
+                outputs = model(ids=ids, mask=mask, token_type_ids=token_type_ids)
+            else:
+                outputs = model(ids=ids, mask=mask, token_type_ids=None)
+            
             fin_targets.extend(targets.cpu().detach().numpy().tolist())
             fin_outputs.extend(torch.sigmoid(outputs).cpu().detach().numpy().tolist())
     return fin_outputs, fin_targets

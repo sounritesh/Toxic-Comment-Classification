@@ -18,7 +18,10 @@ class BertClassifier(nn.Module):
 
     def forward(self, ids, mask, token_type_ids):
 
-        o = self.bert(ids.squeeze(), attention_mask=mask.squeeze(), token_type_ids=token_type_ids.squeeze())  
+        if token_type_ids != None:
+            o = self.bert(ids.squeeze(), attention_mask=mask.squeeze(), token_type_ids=token_type_ids.squeeze())  
+        else:
+            o = self.bert(ids.squeeze(), attention_mask=mask.squeeze())  
         
         try:
             output = self.relu(self.fc1(o['pooler_output']))
