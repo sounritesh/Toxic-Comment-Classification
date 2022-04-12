@@ -186,8 +186,8 @@ def objective(trial):
     params = {
         'hidden_size': trial.suggest_int('hidden_size', 100, 768),
         'dropout': trial.suggest_uniform('dropout', 0.1, 0.7),
-        'lr': trial.suggest_loguniform('lr', 1e-3, 1e-2),
-        'bert_path': trial.suggest_categorical("bert_path", ["unitary/toxic-bert", "unitary/unbiased-toxic-roberta", "unitary/multilingual-toxic-xlm-roberta"]),
+        'lr': trial.suggest_loguniform('lr', 1e-4, 1e-2),
+        'bert_path': trial.suggest_categorical("bert_path", ["unitary/unbiased-toxic-roberta", "unitary/multilingual-toxic-xlm-roberta"]),
         'input_size': 768,
         'ntargets': 1,
     }

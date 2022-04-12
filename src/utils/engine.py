@@ -36,7 +36,6 @@ def train_fn(data_loader, model, optimizer, device, bert_flag):
     loss_tot = 0
     for bi, d in tqdm(enumerate(data_loader), total=len(data_loader), position=0, leave=True):
         ids = d["input_ids"]
-        token_type_ids = d["token_type_ids"]
         mask = d["attention_mask"]
         targets = d["targets"]
 
@@ -47,6 +46,7 @@ def train_fn(data_loader, model, optimizer, device, bert_flag):
         optimizer.zero_grad()
 
         if bert_flag:
+            token_type_ids = d["token_type_ids"]
             token_type_ids = token_type_ids.to(device, dtype=torch.long)
             outputs = model(ids=ids, mask=mask, token_type_ids=token_type_ids)
         else:
@@ -82,7 +82,6 @@ def eval_fn(data_loader, model, device, bert_flag):
     with torch.no_grad():
         for bi, d in tqdm(enumerate(data_loader), total=len(data_loader), position=0, leave=True):
             ids = d["input_ids"]
-            token_type_ids = d["token_type_ids"]
             mask = d["attention_mask"]
             targets = d["targets"]
 
@@ -90,6 +89,7 @@ def eval_fn(data_loader, model, device, bert_flag):
             targets = targets.to(device, dtype=torch.float)
             ids = ids.to(device, dtype=torch.long)
             if bert_flag:
+                token_type_ids = d["token_type_ids"]
                 token_type_ids = token_type_ids.to(device, dtype=torch.long)
                 outputs = model(ids=ids, mask=mask, token_type_ids=token_type_ids)
             else:
