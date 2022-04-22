@@ -1,4 +1,4 @@
-import src.utils.config as config
+import src.config.config as config
 import src.data.dataset as dataset
 import src.utils.engine as engine
 from src.utils.metrics import eval_perf
@@ -53,7 +53,7 @@ torch.manual_seed(args.seed)
 
 def run(params, save_model=True):
     wandb.init(
-        project="pacemaker", 
+        project="pacemaker",
         entity="now-and-me",
         config=params
     )
@@ -62,10 +62,11 @@ def run(params, save_model=True):
     df.blocked = df.blocked.astype(float)
     df.body = df.body.astype(str)
 
-    df = pd.concat([ df[df['blocked']==1], df[df['blocked']==0].sample(frac=0.015) ])
+    blocked_df = df[df['blocked']==1]
+    df = pd.concat([ blocked_df, df[(df['blocked']==0) & (df['banned']==0)].sample(n=len(blocked_df)) ])
 
     df_train = df.sample(frac=0.8)
-    df_rest = df.drop(df_train.index)    
+    df_rest = df.drop(df_train.index)
     df_val = df_rest.sample(frac=0.4)
     df_test = df_rest.drop(df_val.index)
 
@@ -74,9 +75,9 @@ def run(params, save_model=True):
     tokenizer = transformers.AutoTokenizer.from_pretrained(params['bert_path'], do_lower_case=True)
 
     train_dataset = dataset.ToxicityDatasetBERT(
-        df_train.body.values, 
-        df_train.blocked.values, 
-        tokenizer, 
+        df_train.body.values,
+        df_train.blocked.values,
+        tokenizer,
         args.max_len,
         args.preprocess
     )
@@ -85,9 +86,9 @@ def run(params, save_model=True):
     )
 
     valid_dataset = dataset.ToxicityDatasetBERT(
-        df_val.body.values, 
-        df_val.blocked.values, 
-        tokenizer, 
+        df_val.body.values,
+        df_val.blocked.values,
+        tokenizer,
         args.max_len,
         args.preprocess
     )
@@ -96,9 +97,9 @@ def run(params, save_model=True):
     )
 
     test_dataset = dataset.ToxicityDatasetBERT(
-        df_test.body.values, 
-        df_test.blocked.values, 
-        tokenizer, 
+        df_test.body.values,
+        df_test.blocked.values,
+        tokenizer,
         args.max_len,
         args.preprocess
     )
@@ -160,7 +161,7 @@ def run(params, save_model=True):
 
         if early_stopping_iter < early_stopping_counter:
             break
-        
+
         scheduler.step()
         print(f"EPOCH[{epoch+1}]: train loss: {train_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}")
         wandb.log({

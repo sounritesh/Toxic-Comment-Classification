@@ -21,7 +21,7 @@ class ToxicityDatasetBERT(Dataset):
         text = re.sub(r'@[\S]+\b', '', text) # mention
         text = re.sub(r'https?\S+', '', text) # link
         text = re.sub(r'\s+', ' ', text) # multiple white spaces
-        
+
         return text
 
     def __getitem__(self, index):

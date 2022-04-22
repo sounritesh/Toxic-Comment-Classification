@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-from .config import DEVICE
+from src.config.config import DEVICE
 
 
 def loss_fn(outputs, targets):
@@ -94,7 +94,7 @@ def eval_fn(data_loader, model, device, bert_flag):
                 outputs = model(ids=ids, mask=mask, token_type_ids=token_type_ids)
             else:
                 outputs = model(ids=ids, mask=mask, token_type_ids=None)
-            
+
             fin_targets.extend(targets.cpu().detach().numpy().tolist())
             fin_outputs.extend(torch.sigmoid(outputs).cpu().detach().numpy().tolist())
     return fin_outputs, fin_targets

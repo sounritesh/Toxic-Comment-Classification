@@ -1,4 +1,4 @@
-from src.utils.config import *
+from src.config.config import *
 import transformers
 import torch.nn as nn
 
@@ -19,10 +19,10 @@ class BertClassifier(nn.Module):
     def forward(self, ids, mask, token_type_ids):
 
         if token_type_ids != None:
-            o = self.bert(ids.squeeze(), attention_mask=mask.squeeze(), token_type_ids=token_type_ids.squeeze())  
+            o = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)
         else:
-            o = self.bert(ids.squeeze(), attention_mask=mask.squeeze())  
-        
+            o = self.bert(ids.squeeze(), attention_mask=mask.squeeze())
+
         try:
             output = self.relu(self.fc1(o['pooler_output']))
             output = self.bert_drop(output)
