@@ -10,7 +10,7 @@ def prepare_dataset():
     df["banned"] = df.banned_at.isna().apply(lambda x: not x)
 
     df["diff"] = df.banned.values.astype(int) - df.blocked.values.astype(int)
-    df = df[df["diff"]==0]
+    df = df[df["diff"]!=1]
 
     df = df[df["unix"] > BASE_STAMP][["created_at", "body", "blocked", "banned"]]
     df.dropna(inplace=True)
