@@ -53,7 +53,7 @@ torch.manual_seed(args.seed)
 
 def run(params, save_model=True):
     wandb.init(
-        project="pacemaker",
+        project="pacemaker-xl-val",
         entity="now-and-me",
         config=params
     )
@@ -64,13 +64,16 @@ def run(params, save_model=True):
     df.banned = df.banned.astype(float)
     df.body = df.body.astype(str)
 
-    blocked_df = df[df['blocked']==1]
-    df = pd.concat([ blocked_df, df[(df['blocked']==0) & (df['banned']==0)].sample(n=len(blocked_df)) ])
+    # blocked_df = df[df['blocked']==1]
+    # df = pd.concat([ blocked_df, df[(df['blocked']==0) & (df['banned']==0)].sample(n=len(blocked_df)) ])
 
     df_train = df.sample(frac=0.8)
     df_rest = df.drop(df_train.index)
     df_val = df_rest.sample(frac=0.4)
     df_test = df_rest.drop(df_val.index)
+
+    blocked_df = df_train[df_train['blocked']==1]
+    df_train = pd.concat([ blocked_df, df_train[(df_train['blocked']==0) & (df_train['banned']==0)].sample(n=len(blocked_df)) ])
 
     print(f"Training, Development and Validation Split, \ntrain: {df_train['blocked'].value_counts()} \nval: {df_val['blocked'].value_counts()} \ntest: {df_test['blocked'].value_counts()}")
 

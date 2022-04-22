@@ -8,6 +8,10 @@ def prepare_dataset():
     df = df_thoughts.merge(df_users, on="author")
     df["unix"] = (df.created_at - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
     df["banned"] = df.banned_at.isna().apply(lambda x: not x)
+
+    df["diff"] = df.banned.values - df.blocked.values
+    df = df[df["diff"]==0]
+
     df = df[df["unix"] > BASE_STAMP][["created_at", "body", "blocked", "banned"]]
     df.dropna(inplace=True)
 
