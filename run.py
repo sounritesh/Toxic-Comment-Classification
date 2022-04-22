@@ -114,6 +114,7 @@ def run(params, save_model=True):
 
     device = torch.device(config.DEVICE)
     model = BertClassifier(params)
+    model.load_state_dict(torch.load("output/35_model.bin"), map_location=torch.device("cuda"))
     model.to(device)
     wandb.watch(model, log="all", log_freq=10, idx=None, log_graph=(True))
 
