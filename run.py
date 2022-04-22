@@ -2,6 +2,8 @@ import src.config.config as config
 import src.data.dataset as dataset
 import src.utils.engine as engine
 from src.utils.metrics import eval_perf
+from src.data.prepare_data import prepare_dataset
+
 import torch
 import pandas as pd
 import torch.nn as nn
@@ -21,11 +23,10 @@ import os
 
 from argparse import ArgumentParser
 
-parser = ArgumentParser(description="Train model on the dataset and evaluate results.")
+parser = ArgumentParser(description="Fetch, load and process data from Mongo client. Then train the model with optuna eager searched hyperparameters.")
 parser.add_argument("--seed", type=int, default=0, help="Random seed for all sampling purposes")
-parser.add_argument("--data_path", type=str, help="Path to training file")
-# parser.add_argument("--val_path", type=str, help="Path to validation file")
-# parser.add_argument("--test_path", type=str, help="Path to testing file")
+# parser.add_argument("--data_path", type=str, help="Path to training file")
+
 parser.add_argument("--bert_path", default="bert-base-multilingual-uncased", type=str, help="Path to base bert model")
 
 parser.add_argument("--lr", type=float, default=1e-4, help="Specifies the learning rate for optimizer")
@@ -33,7 +34,6 @@ parser.add_argument("--dropout", type=float, default=0.3, help="Specifies the dr
 
 parser.add_argument("--preprocess", action="store_true", help="To apply preprocessing step")
 parser.add_argument("--tune", action="store_true", help="To tune model by trying different hyperparams")
-# parser.add_argument("--bert", action="store_true", help="To signify whether the model is bert based")
 
 parser.add_argument("--output_dir", type=str, help="Path to output directory for saving model checkpoints")
 
@@ -58,8 +58,10 @@ def run(params, save_model=True):
         config=params
     )
 
-    df = pd.read_csv(args.data_path).sample(frac=1).reset_index(drop=True)
+    # df = pd.read_csv(args.data_path).sample(frac=1).reset_index(drop=True)
+    df = prepare_dataset()
     df.blocked = df.blocked.astype(float)
+    df.banned = df.banned.astype(float)
     df.body = df.body.astype(str)
 
     blocked_df = df[df['blocked']==1]
@@ -70,7 +72,7 @@ def run(params, save_model=True):
     df_val = df_rest.sample(frac=0.4)
     df_test = df_rest.drop(df_val.index)
 
-    print(f"Stratification Split, \ntrain: {df_train['blocked'].value_counts()} \nval: {df_val['blocked'].value_counts()} \ntest: {df_test['blocked'].value_counts()}")
+    print(f"Training, Development and Validation Split, \ntrain: {df_train['blocked'].value_counts()} \nval: {df_val['blocked'].value_counts()} \ntest: {df_test['blocked'].value_counts()}")
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(params['bert_path'], do_lower_case=True)
 
