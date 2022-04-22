@@ -139,10 +139,11 @@ def run(params, save_model=True):
     num_train_steps = int(len(df_train) / args.train_batch_size * args.epochs)
     optimizer = SGD(optimizer_parameters, lr=params['lr'])
 
-    scheduler = lr_scheduler.StepLR(
+    scheduler = lr_scheduler.ReduceLROnPlateau(
         optimizer,
-        step_size=5,
-        gamma=0.5
+        mode='max',
+        factor=0.25,
+        patience=0,
     )
 
     early_stopping_iter = 3
@@ -151,7 +152,7 @@ def run(params, save_model=True):
     best_roc_auc = 0
     for epoch in range(args.epochs):
         train_loss = engine.train_fn(train_data_loader, model, optimizer, device, bert_flag)
-        outputs, targets = engine.eval_fn(valid_data_loader, model, device, bert_flag)
+        outputs, targets, val_loss = engine.eval_fn(valid_data_loader, model, device, bert_flag)
         accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs)
         print(f"Accuracy Score = {accuracy}")
         if roc_auc > best_roc_auc:
@@ -164,18 +165,19 @@ def run(params, save_model=True):
         if early_stopping_iter < early_stopping_counter:
             break
 
-        scheduler.step()
-        print(f"EPOCH[{epoch+1}]: train loss: {train_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}")
+        scheduler.step(roc_auc)
+        print(f"EPOCH[{epoch+1}]: train loss: {train_loss}, val loss: {val_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}")
         wandb.log({
             "train loss": train_loss,
             "accuracy": accuracy,
             "precision": precision,
             "recall": recall,
             "f1-score": fscore,
-            "roc-auc": roc_auc
+            "roc-auc": roc_auc,
+            "val_loss": val_loss
         })
 
-    outputs, targets = engine.eval_fn(test_data_loader, model, device, bert_flag)
+    outputs, targets, _ = engine.eval_fn(test_data_loader, model, device, bert_flag)
     accuracy, precision, recall, fscore, roc_auc = eval_perf(targets, outputs)
 
     wandb.summary['test_f1'] = fscore
