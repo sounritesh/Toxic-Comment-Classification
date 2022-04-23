@@ -27,7 +27,8 @@ parser = ArgumentParser(description="Fetch, load and process data from Mongo cli
 parser.add_argument("--seed", type=int, default=0, help="Random seed for all sampling purposes")
 # parser.add_argument("--data_path", type=str, help="Path to training file")
 
-parser.add_argument("--bert_path", default="bert-base-multilingual-uncased", type=str, help="Path to base bert model")
+parser.add_argument("--bert_path", default="unitary/toxic-bert", type=str, help="Path to base bert model")
+parser.add_argument("--checkpoint", default="", type=str, help="Checkpoint model file to continue training from")
 
 parser.add_argument("--lr", type=float, default=1e-4, help="Specifies the learning rate for optimizer")
 parser.add_argument("--dropout", type=float, default=0.3, help="Specifies the dropout for BERT output")
@@ -114,7 +115,8 @@ def run(params, save_model=True):
 
     device = torch.device(config.DEVICE)
     model = BertClassifier(params)
-    model.load_state_dict(torch.load("output/35_model.bin", map_location=torch.device("cuda")))
+    if args.checkpoint != "":
+        model.load_state_dict(torch.load(args.checkpoint, map_location=device))
     model.to(device)
     wandb.watch(model, log="all", log_freq=10, idx=None, log_graph=(True))
 
