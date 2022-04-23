@@ -148,7 +148,7 @@ def run(params, save_model=True):
     scheduler = lr_scheduler.ReduceLROnPlateau(
         optimizer,
         mode='max',
-        factor=0.25,
+        factor=0.5,
         patience=0,
     )
 
