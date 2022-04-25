@@ -9,6 +9,7 @@ import pandas as pd
 import torch.nn as nn
 import numpy as np
 import wandb
+import json
 
 import transformers
 
@@ -195,10 +196,10 @@ def run(params, save_model=True):
 
 def objective(trial):
     params = {
-        'hidden_size': trial.suggest_int('hidden_size', 100, 768),
-        'dropout': trial.suggest_uniform('dropout', 0.1, 0.7),
+        'hidden_size': trial.suggest_int('hidden_size', 300, 600),
+        'dropout': trial.suggest_uniform('dropout', 0.1, 0.3),
         'lr': trial.suggest_loguniform('lr', 1e-4, 1e-2),
-        'bert_path': trial.suggest_categorical("bert_path", ["unitary/unbiased-toxic-roberta", "unitary/multilingual-toxic-xlm-roberta"]),
+        'bert_path': args.bert_path,
         'input_size': 768,
         'ntargets': 1,
     }
@@ -211,6 +212,9 @@ def main():
 
         trial_ = study.best_trial
         print(f"\n Best Trial: {trial_.values}, Params: {trial_.params}")
+
+        with open("src/config/params.json") as f:
+            json.dump(trial_.params, f, indent=4)
 
         score = run(trial_.params, True)
         print(score)
