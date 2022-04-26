@@ -19,9 +19,7 @@ from torch.optim import Adam, lr_scheduler, SGD
 import optuna
 import random
 from tqdm.notebook import tqdm
-
 import os
-
 from argparse import ArgumentParser
 
 parser = ArgumentParser(description="Fetch, load and process data from Mongo client. Then train the model with optuna eager searched hyperparameters.")
