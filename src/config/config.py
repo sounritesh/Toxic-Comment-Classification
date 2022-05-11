@@ -1,6 +1,6 @@
 import torch
 from pathlib import Path
-import logging
+import logging.config
 import sys
 from rich.logging import RichHandler
 

@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pacemaker
+  labels:
+    app: pacemaker
+    version: v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: pacemaker
+          image: gcr.io/overflow-production/pacemaker:v1
+          env:
+            - name: LD_LIBRARY_PATH
+              value: "/usr/local/nvidia/lib64:/usr/local/nvidia/bin"
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+      nodeSelector:
+        cloud.google.com/gke-nodepool: ml-pool
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pacemaker
+  labels:
+    app: pacemaker
+    service: pacemaker
+spec:
+  ports:
+    - name: default
+      appProtocol: tcp
+      port: 80
+      targetPort: 80
+  selector:
+    app: pacemaker
+    version: v2
