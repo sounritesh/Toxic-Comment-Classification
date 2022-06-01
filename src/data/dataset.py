@@ -19,12 +19,12 @@ class ToxicityDatasetBERT(Dataset):
     def mask_name(self, text):
         masked_text = ""
         for t in text.split():
+            print(t)
             if t.lower() in self.names:
                 masked_text += " <PERSON>"
                 print(True)
             else:
                 masked_text += " {}".format(t)
-        
         return masked_text
 
     @staticmethod
@@ -52,14 +52,19 @@ class ToxicityDatasetBERT(Dataset):
         filtered_string = filtered_string[1:]
         return filtered_string
 
+    def preprocess(self, text):
+        text = self.mask_text(text)
+        text = self.clean_text(text)
+        text = self.mask_name(text)
+        text = self.clean_text(text)
+
+        return text
+
     def __getitem__(self, index):
         text = self.texts[index]
 
         if self.preprocess:
-            text = self.mask_text(text)
-            text = self.clean_text(text)
-            text = self.mask_name(text)
-            text = self.clean_text(text)
+            text = self.preprocess(text)
 
         inputs = self.tokenizer.encode_plus(
             text,
