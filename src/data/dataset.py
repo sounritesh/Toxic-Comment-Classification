@@ -21,6 +21,7 @@ class ToxicityDatasetBERT(Dataset):
         for t in text.split():
             if t.lower() in self.names:
                 masked_text += " <PERSON>"
+                print(True)
             else:
                 masked_text += " {}".format(t)
         
