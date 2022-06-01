@@ -62,7 +62,7 @@ class ToxicityDatasetBERT(Dataset):
         text = self.texts[index]
 
         if self.preprocess:
-            text = self.preprocess(text).strip()
+            text = self.preprocess_text(text).strip()
 
         inputs = self.tokenizer.encode_plus(
             text,
