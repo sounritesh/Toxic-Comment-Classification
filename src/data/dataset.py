@@ -30,7 +30,7 @@ class ToxicityDatasetBERT(Dataset):
         doc = self.nlp(text)
         filtered_string = ""
         for token in doc:
-            if token.pos_ in ['PROPN', 'NUM']:
+            if token.ent_type_ in ['GPE', 'DATE', 'FAC', 'LOC', 'MONEY', 'NORP', 'ORG', 'PERCENT', 'PERSON', 'PRODUCT', 'QUANTITY']:
                 new_token = " <{}>".format(token.ent_type_)
             elif token.pos_ == "PUNCT":
                 new_token = token.text
@@ -44,8 +44,8 @@ class ToxicityDatasetBERT(Dataset):
         text = self.texts[index]
 
         if self.preprocess:
-            text = self.clean_text(text)
             text = self.mask_text(text)
+            text = self.clean_text(text)
 
         inputs = self.tokenizer.encode_plus(
             text,
