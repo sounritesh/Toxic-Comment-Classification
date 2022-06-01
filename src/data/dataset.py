@@ -52,7 +52,7 @@ class ToxicityDatasetBERT(Dataset):
         filtered_string = filtered_string[1:]
         return filtered_string
 
-    def preprocess(self, text):
+    def preprocess_text(self, text):
         text = self.mask_text(text)
         text = self.clean_text(text)
         text = self.mask_name(text)
