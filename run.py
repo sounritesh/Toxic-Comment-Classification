@@ -36,6 +36,7 @@ parser.add_argument("--preprocess", action="store_true", help="To apply preproce
 parser.add_argument("--tune", action="store_true", help="To tune model by trying different hyperparams")
 
 parser.add_argument("--output_dir", type=str, help="Path to output directory for saving model checkpoints")
+parser.add_argument("--names_path", type=str, help="Path to name csv")
 
 parser.add_argument("--max_len", type=int, default=128, help="Specifies the maximum length of input sequence")
 parser.add_argument("--hidden_size", type=int, default=32, help="Specifies the hidden size of fully connected layer")
@@ -79,12 +80,15 @@ def run(params, save_model=True):
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(params['bert_path'], do_lower_case=True)
 
+    names = pd.read_csv(args.names_path).name.values.tolist()
+
     train_dataset = dataset.ToxicityDatasetBERT(
         df_train.body.values,
         df_train.blocked.values,
         tokenizer,
         args.max_len,
-        args.preprocess
+        args.preprocess,
+        names
     )
     train_data_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.train_batch_size
@@ -95,7 +99,8 @@ def run(params, save_model=True):
         df_val.blocked.values,
         tokenizer,
         args.max_len,
-        args.preprocess
+        args.preprocess,
+        names
     )
     valid_data_loader = torch.utils.data.DataLoader(
         valid_dataset, batch_size=args.val_batch_size
@@ -106,7 +111,8 @@ def run(params, save_model=True):
         df_test.blocked.values,
         tokenizer,
         args.max_len,
-        args.preprocess
+        args.preprocess,
+        names
     )
     test_data_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=args.val_batch_size
@@ -119,7 +125,7 @@ def run(params, save_model=True):
     model.to(device)
     wandb.watch(model, log="all", log_freq=10, idx=None, log_graph=(True))
 
-    if "bert" in params['bert_path']:
+    if "bert" in params['bert_path'].lower():
         bert_flag = True
     else:
         bert_flag = False
