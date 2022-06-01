@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 import torch
 import re
+import spacy
 
 class ToxicityDatasetBERT(Dataset):
     def __init__(self, texts, targets, tokenizer, max_len, preprocess):
@@ -9,6 +10,7 @@ class ToxicityDatasetBERT(Dataset):
         self.tokenizer = tokenizer
         self.max_len = max_len
         self.preprocess = preprocess
+        self.nlp = spacy.load("nl_core_news_lg")
 
     def __len__(self):
         return len(self.targets)
@@ -24,11 +26,26 @@ class ToxicityDatasetBERT(Dataset):
 
         return text
 
+    def mask_text(self, text):
+        doc = self.nlp(text)
+        filtered_string = ""
+        for token in doc:
+            if token.pos_ in ['PROPN', 'NUM']:
+                new_token = " <{}>".format(token.ent_type_)
+            elif token.pos_ == "PUNCT":
+                new_token = token.text
+            else:
+                new_token = " {}".format(token.text)
+            filtered_string += new_token
+        filtered_string = filtered_string[1:]
+        return filtered_string
+
     def __getitem__(self, index):
         text = self.texts[index]
 
         if self.preprocess:
             text = self.clean_text(text)
+            text = self.mask_text(text)
 
         inputs = self.tokenizer.encode_plus(
             text,

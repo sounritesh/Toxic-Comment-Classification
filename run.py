@@ -119,7 +119,7 @@ def run(params, save_model=True):
     model.to(device)
     wandb.watch(model, log="all", log_freq=10, idx=None, log_graph=(True))
 
-    if params['bert_path'] == "unitary/toxic-bert":
+    if "bert" in params['bert_path']:
         bert_flag = True
     else:
         bert_flag = False
@@ -194,8 +194,8 @@ def run(params, save_model=True):
 
 def objective(trial):
     params = {
-        'hidden_size': trial.suggest_int('hidden_size', 300, 600),
-        'dropout': trial.suggest_uniform('dropout', 0.1, 0.3),
+        'hidden_size': trial.suggest_int('hidden_size', 100, 600),
+        'dropout': trial.suggest_uniform('dropout', 0.1, 0.6),
         'lr': trial.suggest_loguniform('lr', 1e-4, 1e-2),
         'bert_path': args.bert_path,
         'input_size': 768,
