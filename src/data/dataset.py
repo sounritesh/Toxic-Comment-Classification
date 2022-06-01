@@ -10,7 +10,7 @@ class ToxicityDatasetBERT(Dataset):
         self.tokenizer = tokenizer
         self.max_len = max_len
         self.preprocess = preprocess
-        self.nlp = spacy.load("nl_core_news_lg")
+        self.nlp = spacy.load("en_core_web_trf")
 
     def __len__(self):
         return len(self.targets)
