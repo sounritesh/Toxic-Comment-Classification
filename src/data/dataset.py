@@ -4,16 +4,27 @@ import re
 import spacy
 
 class ToxicityDatasetBERT(Dataset):
-    def __init__(self, texts, targets, tokenizer, max_len, preprocess):
+    def __init__(self, texts, targets, tokenizer, max_len, preprocess, name_list = []):
         self.texts = texts
         self.targets = targets
         self.tokenizer = tokenizer
         self.max_len = max_len
         self.preprocess = preprocess
         self.nlp = spacy.load("en_core_web_trf")
+        self.names = name_list
 
     def __len__(self):
         return len(self.targets)
+    
+    def mask_name(self, text):
+        masked_text = ""
+        for t in text.split():
+            if t.lower() in self.names:
+                masked_text += " <PERSON>"
+            else:
+                masked_text += " {}".format(t)
+        
+        return masked_text
 
     @staticmethod
     def clean_text(text):
@@ -30,10 +41,10 @@ class ToxicityDatasetBERT(Dataset):
         doc = self.nlp(text)
         filtered_string = ""
         for token in doc:
-            if token.ent_type_ in ['GPE', 'DATE', 'FAC', 'LOC', 'MONEY', 'NORP', 'ORG', 'PERCENT', 'PERSON', 'PRODUCT', 'QUANTITY']:
+            if token.ent_type_ in ['GPE', 'DATE', 'TIME', 'FAC', 'LOC', 'MONEY', 'NORP', 'ORG', 'PERCENT', 'PRODUCT', 'QUANTITY']:
                 new_token = " <{}>".format(token.ent_type_)
             elif token.pos_ == "PUNCT":
-                new_token = token.text
+                new_token = " "
             else:
                 new_token = " {}".format(token.text)
             filtered_string += new_token
@@ -45,6 +56,8 @@ class ToxicityDatasetBERT(Dataset):
 
         if self.preprocess:
             text = self.mask_text(text)
+            text = self.clean_text(text)
+            text = self.mask_name(text)
             text = self.clean_text(text)
 
         inputs = self.tokenizer.encode_plus(
