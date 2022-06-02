@@ -53,13 +53,9 @@ random.seed(args.seed)
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
-def run(params, save_model=True):
-    wandb.init(
-        project="pacemaker-xl-val",
-        entity="now-and-me",
-        config=params
-    )
+train_data_loader, valid_data_loader, test_data_loader = None, None, None
 
+def preprare_dataset():
     # df = pd.read_csv(args.data_path).sample(frac=1).reset_index(drop=True)
     df = prepare_dataset()
     df.blocked = df.blocked.astype(float)
@@ -125,6 +121,15 @@ def run(params, save_model=True):
         test_dataset, batch_size=args.val_batch_size
     )
 
+    return train_data_loader, valid_data_loader, test_data_loader
+
+def run(params, train_data_loader, valid_data_loader, test_data_loader, save_model=True):
+    wandb.init(
+        project="pacemaker-xl-val",
+        entity="now-and-me",
+        config=params
+    )
+
     device = torch.device(config.DEVICE)
     model = BertClassifier(params)
     if args.checkpoint != "":
@@ -164,7 +169,7 @@ def run(params, save_model=True):
         patience=0,
     )
 
-    early_stopping_iter = 3
+    early_stopping_iter = 5
     early_stopping_counter = 0
 
     best_roc_auc = 0
@@ -214,9 +219,15 @@ def objective(trial):
         'input_size': 768,
         'ntargets': 1,
     }
-    return run(params, False)
+    return run(params, train_data_loader, valid_data_loader, test_data_loader, False)
 
 def main():
+    global train_data_loader
+    global valid_data_loader
+    global test_data_loader
+
+    train_data_loader, valid_data_loader, test_data_loader = prepare_dataset()
+
     if args.tune:
         study = optuna.create_study(direction='maximize')
         study.optimize(objective, n_trials=20)
@@ -227,7 +238,7 @@ def main():
         with open("src/config/params.json") as f:
             json.dump(trial_.params, f, indent=4)
 
-        score = run(trial_.params, True)
+        score = run(trial_.params, train_data_loader, valid_data_loader, test_data_loader, True)
         print(score)
     else:
         params = {
@@ -239,7 +250,7 @@ def main():
             'hidden_size': args.hidden_size
         }
 
-        run(params)
+        run(params, train_data_loader, valid_data_loader, test_data_loader)
 
 if __name__ == "__main__":
     main()
