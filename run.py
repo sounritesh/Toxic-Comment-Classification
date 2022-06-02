@@ -159,7 +159,6 @@ def run(params, train_data_loader, valid_data_loader, test_data_loader, save_mod
         },
     ]
 
-    num_train_steps = int(len(df_train) / args.train_batch_size * args.epochs)
     optimizer = SGD(optimizer_parameters, lr=params['lr'])
 
     scheduler = lr_scheduler.ReduceLROnPlateau(
