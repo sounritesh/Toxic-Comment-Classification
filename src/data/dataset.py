@@ -4,13 +4,13 @@ import re
 import spacy
 
 class ToxicityDatasetBERT(Dataset):
-    def __init__(self, texts, targets, tokenizer, max_len, preprocess, name_list = []):
+    def __init__(self, texts, targets, tokenizer, max_len, preprocess, nlp, name_list = []):
         self.texts = texts
         self.targets = targets
         self.tokenizer = tokenizer
         self.max_len = max_len
         self.preprocess = preprocess
-        self.nlp = spacy.load("en_core_web_trf")
+        self.nlp = nlp
         self.names = name_list
 
     def __len__(self):

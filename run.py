@@ -10,6 +10,7 @@ import torch.nn as nn
 import numpy as np
 import wandb
 import json
+import spacy
 
 import transformers
 
@@ -80,6 +81,9 @@ def run(params, save_model=True):
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(params['bert_path'], do_lower_case=True)
 
+    spacy.prefer_gpu()
+    nlp = spacy.load("en_core_web_trf")
+
     names = pd.read_csv(args.names_path).name.values.tolist()
 
     train_dataset = dataset.ToxicityDatasetBERT(
@@ -88,6 +92,7 @@ def run(params, save_model=True):
         tokenizer,
         args.max_len,
         args.preprocess,
+        nlp,
         names
     )
     train_data_loader = torch.utils.data.DataLoader(
@@ -100,6 +105,7 @@ def run(params, save_model=True):
         tokenizer,
         args.max_len,
         args.preprocess,
+        nlp,
         names
     )
     valid_data_loader = torch.utils.data.DataLoader(
@@ -112,6 +118,7 @@ def run(params, save_model=True):
         tokenizer,
         args.max_len,
         args.preprocess,
+        nlp,
         names
     )
     test_data_loader = torch.utils.data.DataLoader(
