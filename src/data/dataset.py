@@ -13,6 +13,23 @@ class ToxicityDatasetBERT(Dataset):
         self.nlp = nlp
         self.names = name_list
 
+
+        self.inputs = []
+        for text in self.texts:
+            if self.preprocess:
+                text = self.preprocess_text(text).strip()
+
+            inputs = self.tokenizer.encode_plus(
+                text,
+                add_special_tokens=True,
+                max_length = self.max_len,
+                padding = 'max_length',
+                truncation = True,
+                return_tensors = 'pt'
+            )
+
+            self.inputs.append(inputs)
+
     def __len__(self):
         return len(self.targets)
     
@@ -59,19 +76,7 @@ class ToxicityDatasetBERT(Dataset):
         return text
 
     def __getitem__(self, index):
-        text = self.texts[index]
-
-        if self.preprocess:
-            text = self.preprocess_text(text).strip()
-
-        inputs = self.tokenizer.encode_plus(
-            text,
-            add_special_tokens=True,
-            max_length = self.max_len,
-            padding = 'max_length',
-            truncation = True,
-            return_tensors = 'pt'
-        )
+        inputs = self.inputs[index]
 
         inputs['targets'] = torch.tensor(self.targets[index], dtype=torch.float)
 
