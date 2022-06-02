@@ -225,13 +225,23 @@ def main():
     global valid_data_loader
     global test_data_loader
 
+    params = {
+        'dropout': args.dropout,
+        'lr': args.lr,
+        'bert_path': args.bert_path,
+        'input_size': 768,
+        'ntargets': 1,
+        'hidden_size': args.hidden_size
+    }
+
+    train_data_loader, valid_data_loader, test_data_loader = preprocess_dataset(params)
+
     if args.tune:
         study = optuna.create_study(direction='maximize')
         study.optimize(objective, n_trials=20)
 
         trial_ = study.best_trial
         print(f"\n Best Trial: {trial_.values}, Params: {trial_.params}")
-        train_data_loader, valid_data_loader, test_data_loader = preprocess_dataset(trial_.params)
 
         with open("src/config/params.json") as f:
             json.dump(trial_.params, f, indent=4)
@@ -239,15 +249,6 @@ def main():
         score = run(trial_.params, train_data_loader, valid_data_loader, test_data_loader, True)
         print(score)
     else:
-        params = {
-            'dropout': args.dropout,
-            'lr': args.lr,
-            'bert_path': args.bert_path,
-            'input_size': 768,
-            'ntargets': 1,
-            'hidden_size': args.hidden_size
-        }
-        train_data_loader, valid_data_loader, test_data_loader = preprocess_dataset(params)
         run(params, train_data_loader, valid_data_loader, test_data_loader)
 
 if __name__ == "__main__":
