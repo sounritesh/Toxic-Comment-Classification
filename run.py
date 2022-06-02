@@ -55,7 +55,7 @@ torch.manual_seed(args.seed)
 
 train_data_loader, valid_data_loader, test_data_loader = None, None, None
 
-def preprare_dataset():
+def preprocess_dataset():
     # df = pd.read_csv(args.data_path).sample(frac=1).reset_index(drop=True)
     df = prepare_dataset()
     df.blocked = df.blocked.astype(float)
@@ -226,7 +226,7 @@ def main():
     global valid_data_loader
     global test_data_loader
 
-    train_data_loader, valid_data_loader, test_data_loader = prepare_dataset()
+    train_data_loader, valid_data_loader, test_data_loader = preprocess_dataset()
 
     if args.tune:
         study = optuna.create_study(direction='maximize')
