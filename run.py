@@ -55,7 +55,7 @@ torch.manual_seed(args.seed)
 
 train_data_loader, valid_data_loader, test_data_loader = None, None, None
 
-def preprocess_dataset():
+def preprocess_dataset(params):
     # df = pd.read_csv(args.data_path).sample(frac=1).reset_index(drop=True)
     df = prepare_dataset()
     df.blocked = df.blocked.astype(float)
@@ -226,14 +226,13 @@ def main():
     global valid_data_loader
     global test_data_loader
 
-    train_data_loader, valid_data_loader, test_data_loader = preprocess_dataset()
-
     if args.tune:
         study = optuna.create_study(direction='maximize')
         study.optimize(objective, n_trials=20)
 
         trial_ = study.best_trial
         print(f"\n Best Trial: {trial_.values}, Params: {trial_.params}")
+        train_data_loader, valid_data_loader, test_data_loader = preprocess_dataset(trial_.params)
 
         with open("src/config/params.json") as f:
             json.dump(trial_.params, f, indent=4)
@@ -249,7 +248,7 @@ def main():
             'ntargets': 1,
             'hidden_size': args.hidden_size
         }
-
+        train_data_loader, valid_data_loader, test_data_loader = preprocess_dataset(params)
         run(params, train_data_loader, valid_data_loader, test_data_loader)
 
 if __name__ == "__main__":
