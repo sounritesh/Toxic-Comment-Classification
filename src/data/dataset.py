@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 import torch
 import re
 import spacy
+from tqdm import tqdm
 
 class ToxicityDatasetBERT(Dataset):
     def __init__(self, texts, targets, tokenizer, max_len, preprocess, nlp, name_list = []):
@@ -15,7 +16,7 @@ class ToxicityDatasetBERT(Dataset):
 
 
         self.inputs = []
-        for text in self.texts:
+        for text in tqdm(self.texts):
             if self.preprocess:
                 text = self.preprocess_text(text).strip()
 
