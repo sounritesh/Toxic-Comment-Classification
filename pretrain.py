@@ -1,4 +1,3 @@
-from tkinter import Y
 import src.config.config as config
 import src.data.dataset as dataset
 import src.utils.engine as engine
@@ -11,7 +10,6 @@ import torch.nn as nn
 import numpy as np
 import wandb
 import json
-import spacy
 
 import transformers
 
