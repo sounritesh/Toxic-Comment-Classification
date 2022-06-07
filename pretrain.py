@@ -71,7 +71,7 @@ def preprocess_dataset(params):
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(params['bert_path'], do_lower_case=True)
 
-    train_dataset = dataset.ToxicityDatasetBERT(
+    train_dataset = dataset.CodeMixedDatasetBERT(
         df_train.text.values,
         df_train.label.values,
         tokenizer,
@@ -82,7 +82,7 @@ def preprocess_dataset(params):
         train_dataset, batch_size=args.train_batch_size
     )
 
-    valid_dataset = dataset.ToxicityDatasetBERT(
+    valid_dataset = dataset.CodeMixedDatasetBERT(
         df_val.text.values,
         df_val.label.values,
         tokenizer,
@@ -93,7 +93,7 @@ def preprocess_dataset(params):
         valid_dataset, batch_size=args.val_batch_size
     )
 
-    test_dataset = dataset.ToxicityDatasetBERT(
+    test_dataset = dataset.CodeMixedDatasetBERT(
         df_test.text.values,
         df_test.label.values,
         tokenizer,
