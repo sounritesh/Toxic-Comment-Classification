@@ -154,11 +154,11 @@ def run(params, train_data_loader, valid_data_loader, test_data_loader, save_mod
     # )
     scheduler = lr_scheduler.StepLR(
         optimizer,
-        gamma=0.25,
-        step_size=10,
+        gamma=0.8,
+        step_size=4,
     )
 
-    early_stopping_iter = 5
+    early_stopping_iter = 7
     early_stopping_counter = 0
 
     best_roc_auc = 0
