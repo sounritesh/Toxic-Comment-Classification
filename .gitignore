@@ -6,3 +6,4 @@ logs
 stores
 model
 names.csv
+*.tsv

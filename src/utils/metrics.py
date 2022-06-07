@@ -21,5 +21,6 @@ def eval_perf(targets, outputs, threshold=0.5):
     acc = metrics.accuracy_score(targets, y_pred_tag, normalize=True, sample_weight=None)
     prec, recall, fscore, _ = metrics.precision_recall_fscore_support(targets, y_pred_tag, average='macro')
     roc_auc = metrics.roc_auc_score(targets, outputs)
+    pr_auc = metrics.average_precision_score(targets, outputs)
 
-    return acc, prec, recall, fscore, roc_auc
+    return acc, prec, recall, fscore, roc_auc, pr_auc

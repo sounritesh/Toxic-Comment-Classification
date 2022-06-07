@@ -1,3 +1,4 @@
+from tkinter import Y
 import src.config.config as config
 import src.data.dataset as dataset
 import src.utils.engine as engine
@@ -37,7 +38,7 @@ parser.add_argument("--preprocess", action="store_true", help="To apply preproce
 parser.add_argument("--tune", action="store_true", help="To tune model by trying different hyperparams")
 
 parser.add_argument("--output_dir", type=str, help="Path to output directory for saving model checkpoints")
-parser.add_argument("--names_path", type=str, help="Path to name csv")
+parser.add_argument("--data_path", type=str, help="Path to data tsv")
 
 parser.add_argument("--max_len", type=int, default=128, help="Specifies the maximum length of input sequence")
 parser.add_argument("--hidden_size", type=int, default=32, help="Specifies the hidden size of fully connected layer")
@@ -56,66 +57,53 @@ torch.manual_seed(args.seed)
 train_data_loader, valid_data_loader, test_data_loader = None, None, None
 
 def preprocess_dataset(params):
-    # df = pd.read_csv(args.data_path).sample(frac=1).reset_index(drop=True)
-    df = prepare_dataset()
-    df.blocked = df.blocked.astype(float)
-    df.banned = df.banned.astype(float)
-    df.body = df.body.astype(str)
+    df = pd.read_csv(args.data_path, header=None).rename({0: "text", 1: "label"}, axis=1)
+    df.dropna(inplace=True)
+    df = df.sample(frac=1).reset_index(drop=True)
 
-    # blocked_df = df[df['blocked']==1]
-    # df = pd.concat([ blocked_df, df[(df['blocked']==0) & (df['banned']==0)].sample(n=len(blocked_df)) ])
+    df.blocked = df.blocked.apply(lambda x: 0 if 'n' in x else 1)
+    df.blocked = df.blocked.astype(float)
+    df.text = df.text.astype(str)
 
     df_train = df.sample(frac=0.8)
     df_rest = df.drop(df_train.index)
     df_val = df_rest.sample(frac=0.4)
     df_test = df_rest.drop(df_val.index)
 
-    blocked_df = df_train[df_train['blocked']==1]
-    df_train = pd.concat([ blocked_df, df_train[(df_train['blocked']==0) & (df_train['banned']==0)].sample(n=len(blocked_df)) ])
-
-    print(f"Training, Development and Validation Split, \ntrain: {df_train['blocked'].value_counts()} \nval: {df_val['blocked'].value_counts()} \ntest: {df_test['blocked'].value_counts()}")
+    print(f"Training, Development and Validation Split, \ntrain: {df_train['label'].value_counts()} \nval: {df_val['label'].value_counts()} \ntest: {df_test['label'].value_counts()}")
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(params['bert_path'], do_lower_case=True)
-
-    spacy.prefer_gpu()
-    nlp = spacy.load("en_core_web_trf")
 
     names = pd.read_csv(args.names_path).name.values.tolist()
 
     train_dataset = dataset.ToxicityDatasetBERT(
-        df_train.body.values,
-        df_train.blocked.values,
+        df_train.text.values,
+        df_train.label.values,
         tokenizer,
         args.max_len,
         args.preprocess,
-        nlp,
-        names
     )
     train_data_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.train_batch_size
     )
 
     valid_dataset = dataset.ToxicityDatasetBERT(
-        df_val.body.values,
-        df_val.blocked.values,
+        df_val.text.values,
+        df_val.label.values,
         tokenizer,
         args.max_len,
         args.preprocess,
-        nlp,
-        names
     )
     valid_data_loader = torch.utils.data.DataLoader(
         valid_dataset, batch_size=args.val_batch_size
     )
 
     test_dataset = dataset.ToxicityDatasetBERT(
-        df_test.body.values,
-        df_test.blocked.values,
+        df_test.text.values,
+        df_test.label.values,
         tokenizer,
         args.max_len,
         args.preprocess,
-        nlp,
-        names
     )
     test_data_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=args.val_batch_size
@@ -125,7 +113,7 @@ def preprocess_dataset(params):
 
 def run(params, train_data_loader, valid_data_loader, test_data_loader, save_model=True):
     wandb.init(
-        project="pacemaker-xl-val",
+        project="pacemaker-pretrain",
         entity="now-and-me",
         config=params
     )
@@ -161,11 +149,16 @@ def run(params, train_data_loader, valid_data_loader, test_data_loader, save_mod
 
     optimizer = SGD(optimizer_parameters, lr=params['lr'])
 
-    scheduler = lr_scheduler.ReduceLROnPlateau(
+    # scheduler = lr_scheduler.ReduceLROnPlateau(
+    #     optimizer,
+    #     mode='max',
+    #     factor=0.5,
+    #     patience=0,
+    # )
+    scheduler = lr_scheduler.StepLR(
         optimizer,
-        mode='max',
-        factor=0.5,
-        patience=0,
+        gamma=0.25,
+        step_size=10,
     )
 
     early_stopping_iter = 5
