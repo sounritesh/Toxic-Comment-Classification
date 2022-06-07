@@ -2,7 +2,6 @@ import src.config.config as config
 import src.data.dataset as dataset
 import src.utils.engine as engine
 from src.utils.metrics import eval_perf
-from src.data.prepare_data import prepare_dataset
 
 import torch
 import pandas as pd
