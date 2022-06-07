@@ -1,3 +1,4 @@
+from yaml import parse
 import src.config.config as config
 import src.data.dataset as dataset
 import src.utils.engine as engine
@@ -44,6 +45,9 @@ parser.add_argument("--epochs", type=int, default=15, help="Specifies the number
 
 parser.add_argument("--train_batch_size", type=int, default=64, help="Specifies the training batch size")
 parser.add_argument("--val_batch_size", type=int, default=256, help="Specifies the validation and testing batch size")
+
+parser.add_argument("--gamma", type=float, default=0.5)
+parser.add_argument("--step_size", type=int, default=10)
 
 args = parser.parse_args()
 
@@ -154,8 +158,8 @@ def run(params, train_data_loader, valid_data_loader, test_data_loader, save_mod
     # )
     scheduler = lr_scheduler.StepLR(
         optimizer,
-        gamma=0.8,
-        step_size=4,
+        gamma=args.gamma,
+        step_size=args.step_size,
     )
 
     early_stopping_iter = 7
