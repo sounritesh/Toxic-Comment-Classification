@@ -7,7 +7,7 @@ import torch
 import pandas as pd
 import torch.nn as nn
 import numpy as np
-import wandb
+# import wandb
 import json
 
 import transformers
@@ -107,18 +107,18 @@ def preprocess_dataset(params):
     return train_data_loader, valid_data_loader, test_data_loader
 
 def run(params, train_data_loader, valid_data_loader, test_data_loader, save_model=True):
-    wandb.init(
-        project="pacemaker-pretrain",
-        entity="now-and-me",
-        config=params
-    )
+    # wandb.init(
+    #     project="pacemaker-pretrain",
+    #     entity="now-and-me",
+    #     config=params
+    # )
 
     device = torch.device(config.DEVICE)
     model = BertClassifier(params)
     if args.checkpoint != "":
         model.load_state_dict(torch.load(args.checkpoint, map_location=device))
     model.to(device)
-    wandb.watch(model, log="all", log_freq=10, idx=None, log_graph=(True))
+    # wandb.watch(model, log="all", log_freq=10, idx=None, log_graph=(True))
 
     if "bert" in params['bert_path'].lower():
         bert_flag = True
@@ -177,22 +177,22 @@ def run(params, train_data_loader, valid_data_loader, test_data_loader, save_mod
 
         scheduler.step(roc_auc)
         print(f"EPOCH[{epoch+1}]: train loss: {train_loss}, val loss: {val_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}, pr_auc: {pr_auc}")
-        wandb.log({
-            "train loss": train_loss,
-            "accuracy": accuracy,
-            "precision": precision,
-            "recall": recall,
-            "f1-score": fscore,
-            "roc-auc": roc_auc,
-            "pr-auc": pr_auc,
-            "val_loss": val_loss
-        })
+        # wandb.log({
+        #     "train loss": train_loss,
+        #     "accuracy": accuracy,
+        #     "precision": precision,
+        #     "recall": recall,
+        #     "f1-score": fscore,
+        #     "roc-auc": roc_auc,
+        #     "pr-auc": pr_auc,
+        #     "val_loss": val_loss
+        # })
 
     outputs, targets, _ = engine.eval_fn(test_data_loader, model, device, bert_flag)
     accuracy, precision, recall, fscore, roc_auc, pr_auc = eval_perf(targets, outputs)
 
-    wandb.summary['test_f1'] = fscore
-    wandb.finish()
+    # wandb.summary['test_f1'] = fscore
+    # wandb.finish()
 
     print(f"TEST RESULTS accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}, pr_auc: {pr_auc}")
 
