@@ -58,8 +58,8 @@ def preprocess_dataset(params):
     df.dropna(inplace=True)
     df = df.sample(frac=1).reset_index(drop=True)
 
-    df.blocked = df.blocked.apply(lambda x: 0 if 'n' in x else 1)
-    df.blocked = df.blocked.astype(float)
+    df.label = df.label.apply(lambda x: 0 if 'n' in x else 1)
+    df.label = df.label.astype(float)
     df.text = df.text.astype(str)
 
     df_train = df.sample(frac=0.8)
