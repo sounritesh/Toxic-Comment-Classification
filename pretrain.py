@@ -54,7 +54,7 @@ torch.manual_seed(args.seed)
 train_data_loader, valid_data_loader, test_data_loader = None, None, None
 
 def preprocess_dataset(params):
-    df = pd.read_csv(args.data_path, header=None).rename({0: "text", 1: "label"}, axis=1)
+    df = pd.read_csv(args.data_path, header=None, sep="\t").rename({0: "text", 1: "label"}, axis=1)
     df.dropna(inplace=True)
     df = df.sample(frac=1).reset_index(drop=True)
 
@@ -70,8 +70,6 @@ def preprocess_dataset(params):
     print(f"Training, Development and Validation Split, \ntrain: {df_train['label'].value_counts()} \nval: {df_val['label'].value_counts()} \ntest: {df_test['label'].value_counts()}")
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(params['bert_path'], do_lower_case=True)
-
-    names = pd.read_csv(args.names_path).name.values.tolist()
 
     train_dataset = dataset.ToxicityDatasetBERT(
         df_train.text.values,
