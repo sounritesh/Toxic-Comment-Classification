@@ -62,6 +62,8 @@ def preprocess_dataset(params):
     df.label = df.label.astype(float)
     df.text = df.text.astype(str)
 
+    print(df)
+
     df_train = df.sample(frac=0.8)
     df_rest = df.drop(df_train.index)
     df_val = df_rest.sample(frac=0.4)
@@ -175,7 +177,7 @@ def run(params, train_data_loader, valid_data_loader, test_data_loader, save_mod
         if early_stopping_iter < early_stopping_counter:
             break
 
-        scheduler.step(roc_auc)
+        scheduler.step()
         print(f"EPOCH[{epoch+1}]: train loss: {train_loss}, val loss: {val_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}, pr_auc: {pr_auc}")
         # wandb.log({
         #     "train loss": train_loss,
