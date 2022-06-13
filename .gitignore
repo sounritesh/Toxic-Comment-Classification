@@ -7,3 +7,6 @@ stores
 model
 names.csv
 *.tsv
+Names.txt
+hasoc2021.csv
+pre_dataset.csv
