@@ -30,6 +30,7 @@ parser.add_argument("--max_len", type=int, default=128)
 parser.add_argument("--preprocess", action="store_true")
 parser.add_argument("--tune", action="store_true")
 parser.add_argument("--checkpoint", type=str, default="")
+parser.add_argument("--val_batch_size", type=int, default=256)
 
 args = parser.parse_args()
 
