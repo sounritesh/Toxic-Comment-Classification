@@ -150,7 +150,7 @@ def objective(trial):
         'bert_path': args.bert_path,
         'input_size': 768,
         'ntargets': 1,
-        'threshold': trial.suggest_uniform('dropout', 0.1, 0.95)
+        'threshold': trial.suggest_uniform('threshold', 0.1, 0.95)
     }
     return run(params, train_data_loader, valid_data_loader, test_data_loader, False)
 
