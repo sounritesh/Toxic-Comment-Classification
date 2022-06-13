@@ -178,8 +178,8 @@ def main():
         trial_ = study.best_trial
         print(f"\n Best Trial: {trial_.values}, Params: {trial_.params}")
 
-        with open("src/config/params.json") as f:
-            json.dump(trial_.params, f, indent=4)
+        # with open("src/config/params.json") as f:
+        #     json.dump(trial_.params, f, indent=4)
 
         score = run(trial_.params, train_data_loader, valid_data_loader, test_data_loader, True)
         print(score)
