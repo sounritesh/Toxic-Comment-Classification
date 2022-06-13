@@ -29,6 +29,7 @@ parser.add_argument("--names_path", type=str)
 parser.add_argument("--max_len", type=int, default=128)
 parser.add_argument("--preprocess", action="store_true")
 parser.add_argument("--tune", action="store_true")
+parser.add_argument("--checkpoint", type=str, default="")
 
 args = parser.parse_args()
 
@@ -109,10 +110,16 @@ def run(params, train_data_loader, valid_data_loader, test_data_loader, save_mod
         config=params
     )
 
+    device = torch.device(config.DEVICE)
+
+    model = BertClassifier(params)
+    if args.checkpoint != "":
+        model.load_state_dict(torch.load(args.checkpoint, map_location=device))
+    model.to(device)
+    wandb.watch(model, log="all", log_freq=10, idx=None, log_graph=(True))
+
     s = time.time()
     print("Starting inference...")
-
-    device = torch.device(config.DEVICE)
 
     outputs, targets, _ = engine.eval_fn(valid_data_loader, model, device, True)
     accuracy, precision, recall, fscore, roc_auc, pr_auc = eval_perf(targets, outputs, params['threshold'])
