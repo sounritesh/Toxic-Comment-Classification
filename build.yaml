@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: pacemaker
-          image: gcr.io/overflow-production/pacemaker:v1
+          image: gcr.io/overflow-production/pacemaker:v1-arm64
           env:
             - name: LD_LIBRARY_PATH
               value: "/usr/local/nvidia/lib64:/usr/local/nvidia/bin"

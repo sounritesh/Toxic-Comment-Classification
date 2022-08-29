@@ -1,5 +1,3 @@
-docker build -t gcr.io/overflow-production/pacemaker:v1 .
+docker buildx build --platform=linux/arm64 -t gcr.io/overflow-production/pacemaker:v1-arm64 .
 
-docker run -it -p 80:80 gcr.io/overflow-production/pacemaker:v1
-
-docker push gcr.io/overflow-production/pacemaker:v1
+docker push gcr.io/overflow-production/pacemaker:v1-arm64
