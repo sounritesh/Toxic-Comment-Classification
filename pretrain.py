@@ -8,7 +8,7 @@ import torch
 import pandas as pd
 import torch.nn as nn
 import numpy as np
-# import wandb
+import wandb
 import json
 
 import transformers
@@ -22,29 +22,43 @@ from tqdm.notebook import tqdm
 import os
 from argparse import ArgumentParser
 
-parser = ArgumentParser(description="Fetch, load and process data from Mongo client. Then train the model with optuna eager searched hyperparameters.")
-parser.add_argument("--seed", type=int, default=0, help="Random seed for all sampling purposes")
-# parser.add_argument("--data_path", type=str, help="Path to training file")
+parser = ArgumentParser(
+    description="Fetch, load and process data from Mongo client. Then train the model with optuna eager searched hyperparameters.")
+parser.add_argument("--seed", type=int, default=0,
+                    help="Random seed for all sampling purposes")
+parser.add_argument("--data_path", type=str, help="Path to training file")
 
-parser.add_argument("--bert_path", default="unitary/toxic-bert", type=str, help="Path to base bert model")
-parser.add_argument("--checkpoint", default="", type=str, help="Checkpoint model file to continue training from")
+parser.add_argument("--bert_path", default="unitary/toxic-bert",
+                    type=str, help="Path to base bert model")
+parser.add_argument("--checkpoint", default="", type=str,
+                    help="Checkpoint model file to continue training from")
 
-parser.add_argument("--lr", type=float, default=1e-4, help="Specifies the learning rate for optimizer")
-parser.add_argument("--dropout", type=float, default=0.3, help="Specifies the dropout for BERT output")
+parser.add_argument("--lr", type=float, default=1e-4,
+                    help="Specifies the learning rate for optimizer")
+parser.add_argument("--dropout", type=float, default=0.3,
+                    help="Specifies the dropout for BERT output")
 
-parser.add_argument("--preprocess", action="store_true", help="To apply preprocessing step")
-parser.add_argument("--tune", action="store_true", help="To tune model by trying different hyperparams")
+parser.add_argument("--preprocess", action="store_true",
+                    help="To apply preprocessing step")
+parser.add_argument("--tune", action="store_true",
+                    help="To tune model by trying different hyperparams")
 
-parser.add_argument("--output_dir", type=str, help="Path to output directory for saving model checkpoints")
+parser.add_argument("--output_dir", type=str,
+                    help="Path to output directory for saving model checkpoints")
 parser.add_argument("--data_path", type=str, help="Path to data tsv")
 
-parser.add_argument("--max_len", type=int, default=128, help="Specifies the maximum length of input sequence")
-parser.add_argument("--hidden_size", type=int, default=32, help="Specifies the hidden size of fully connected layer")
+parser.add_argument("--max_len", type=int, default=128,
+                    help="Specifies the maximum length of input sequence")
+parser.add_argument("--hidden_size", type=int, default=32,
+                    help="Specifies the hidden size of fully connected layer")
 
-parser.add_argument("--epochs", type=int, default=15, help="Specifies the number of training epochs")
+parser.add_argument("--epochs", type=int, default=15,
+                    help="Specifies the number of training epochs")
 
-parser.add_argument("--train_batch_size", type=int, default=64, help="Specifies the training batch size")
-parser.add_argument("--val_batch_size", type=int, default=256, help="Specifies the validation and testing batch size")
+parser.add_argument("--train_batch_size", type=int, default=64,
+                    help="Specifies the training batch size")
+parser.add_argument("--val_batch_size", type=int, default=256,
+                    help="Specifies the validation and testing batch size")
 
 parser.add_argument("--gamma", type=float, default=0.5)
 parser.add_argument("--step_size", type=int, default=10)
@@ -57,8 +71,10 @@ torch.manual_seed(args.seed)
 
 train_data_loader, valid_data_loader, test_data_loader = None, None, None
 
+
 def preprocess_dataset(params):
-    df = pd.read_csv(args.data_path, header=None, sep="\t").rename({0: "text", 1: "label"}, axis=1)
+    df = pd.read_csv(args.data_path, header=None, sep="\t").rename(
+        {0: "text", 1: "label"}, axis=1)
     df.dropna(inplace=True)
     df = df.sample(frac=1).reset_index(drop=True)
 
@@ -73,9 +89,11 @@ def preprocess_dataset(params):
     df_val = df_rest.sample(frac=0.4)
     df_test = df_rest.drop(df_val.index)
 
-    print(f"Training, Development and Validation Split, \ntrain: {df_train['label'].value_counts()} \nval: {df_val['label'].value_counts()} \ntest: {df_test['label'].value_counts()}")
+    print(
+        f"Training, Development and Validation Split, \ntrain: {df_train['label'].value_counts()} \nval: {df_val['label'].value_counts()} \ntest: {df_test['label'].value_counts()}")
 
-    tokenizer = transformers.AutoTokenizer.from_pretrained(params['bert_path'], do_lower_case=True)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(
+        params['bert_path'], do_lower_case=True)
 
     train_dataset = dataset.CodeMixedDatasetBERT(
         df_train.text.values,
@@ -112,19 +130,20 @@ def preprocess_dataset(params):
 
     return train_data_loader, valid_data_loader, test_data_loader
 
+
 def run(params, train_data_loader, valid_data_loader, test_data_loader, save_model=True):
-    # wandb.init(
-    #     project="pacemaker-pretrain",
-    #     entity="now-and-me",
-    #     config=params
-    # )
+    wandb.init(
+        project="pacemaker-pretrain",
+        entity="now-and-me",
+        config=params
+    )
 
     device = torch.device(config.DEVICE)
     model = BertClassifier(params)
     if args.checkpoint != "":
         model.load_state_dict(torch.load(args.checkpoint, map_location=device))
     model.to(device)
-    # wandb.watch(model, log="all", log_freq=10, idx=None, log_graph=(True))
+    wandb.watch(model, log="all", log_freq=10, idx=None, log_graph=(True))
 
     if "bert" in params['bert_path'].lower():
         bert_flag = True
@@ -167,14 +186,18 @@ def run(params, train_data_loader, valid_data_loader, test_data_loader, save_mod
 
     best_roc_auc = 0
     for epoch in range(args.epochs):
-        train_loss = engine.train_fn(train_data_loader, model, optimizer, device, bert_flag)
-        outputs, targets, val_loss = engine.eval_fn(valid_data_loader, model, device, bert_flag)
-        accuracy, precision, recall, fscore, roc_auc, pr_auc = eval_perf(targets, outputs)
+        train_loss = engine.train_fn(
+            train_data_loader, model, optimizer, device, bert_flag)
+        outputs, targets, val_loss = engine.eval_fn(
+            valid_data_loader, model, device, bert_flag)
+        accuracy, precision, recall, fscore, roc_auc, pr_auc = eval_perf(
+            targets, outputs)
         print(f"Accuracy Score = {accuracy}")
         if roc_auc > best_roc_auc:
             best_roc_auc = roc_auc
             if save_model:
-                torch.save(model.state_dict(), os.path.join(args.output_dir, f'{epoch}_model.bin'))
+                torch.save(model.state_dict(), os.path.join(
+                    args.output_dir, f'{epoch}_model.bin'))
         else:
             early_stopping_counter += 1
 
@@ -183,26 +206,30 @@ def run(params, train_data_loader, valid_data_loader, test_data_loader, save_mod
 
         scheduler.step()
         print(f"EPOCH[{epoch+1}]: train loss: {train_loss}, val loss: {val_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}, pr_auc: {pr_auc}")
-        # wandb.log({
-        #     "train loss": train_loss,
-        #     "accuracy": accuracy,
-        #     "precision": precision,
-        #     "recall": recall,
-        #     "f1-score": fscore,
-        #     "roc-auc": roc_auc,
-        #     "pr-auc": pr_auc,
-        #     "val_loss": val_loss
-        # })
+        wandb.log({
+            "train loss": train_loss,
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1-score": fscore,
+            "roc-auc": roc_auc,
+            "pr-auc": pr_auc,
+            "val_loss": val_loss
+        })
 
-    outputs, targets, _ = engine.eval_fn(test_data_loader, model, device, bert_flag)
-    accuracy, precision, recall, fscore, roc_auc, pr_auc = eval_perf(targets, outputs)
+    outputs, targets, _ = engine.eval_fn(
+        test_data_loader, model, device, bert_flag)
+    accuracy, precision, recall, fscore, roc_auc, pr_auc = eval_perf(
+        targets, outputs)
 
-    # wandb.summary['test_f1'] = fscore
-    # wandb.finish()
+    wandb.summary['test_f1'] = fscore
+    wandb.finish()
 
-    print(f"TEST RESULTS accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}, pr_auc: {pr_auc}")
+    print(
+        f"TEST RESULTS accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1-score: {fscore}, roc_auc: {roc_auc}, pr_auc: {pr_auc}")
 
     return best_roc_auc
+
 
 def objective(trial):
     params = {
@@ -214,6 +241,7 @@ def objective(trial):
         'ntargets': 1,
     }
     return run(params, train_data_loader, valid_data_loader, test_data_loader, False)
+
 
 def main():
     global train_data_loader
@@ -229,7 +257,8 @@ def main():
         'hidden_size': args.hidden_size
     }
 
-    train_data_loader, valid_data_loader, test_data_loader = preprocess_dataset(params)
+    train_data_loader, valid_data_loader, test_data_loader = preprocess_dataset(
+        params)
 
     if args.tune:
         study = optuna.create_study(direction='maximize')
@@ -241,10 +270,12 @@ def main():
         with open("src/config/params.json") as f:
             json.dump(trial_.params, f, indent=4)
 
-        score = run(trial_.params, train_data_loader, valid_data_loader, test_data_loader, True)
+        score = run(trial_.params, train_data_loader,
+                    valid_data_loader, test_data_loader, True)
         print(score)
     else:
         run(params, train_data_loader, valid_data_loader, test_data_loader)
+
 
 if __name__ == "__main__":
     main()
